@@ -1,8 +1,15 @@
 import { useState } from 'react';
 import { User, BookOpen, Sparkles, Eye, EyeOff, ArrowRight, Lock } from 'lucide-react';
+import { authAPI } from '../services/api';
 
 interface SoulChronicleLoginProps {
-  onLoginSuccess: (userData: { sacredName: string; isReturning: boolean }) => void;
+  onLoginSuccess: (userData: { 
+    sacredName: string; 
+    isReturning: boolean;
+    token?: string;
+    email?: string;
+    _id?: string;
+  }) => void;
   onCancel: () => void;
 }
 
@@ -10,6 +17,7 @@ export default function SoulChronicleLogin({ onLoginSuccess, onCancel }: SoulChr
   const [isReturning, setIsReturning] = useState<boolean | null>(null);
   const [formData, setFormData] = useState({
     username: '',
+    email: '',
     password: '',
     confirmPassword: ''
   });
@@ -24,6 +32,11 @@ export default function SoulChronicleLogin({ onLoginSuccess, onCancel }: SoulChr
     // Validation
     if (!formData.username.trim()) {
       setError('Sacred Name is required');
+      return;
+    }
+    
+    if (!formData.email.trim()) {
+      setError('Ethereal address (Email) is required');
       return;
     }
     
@@ -44,15 +57,38 @@ export default function SoulChronicleLogin({ onLoginSuccess, onCancel }: SoulChr
     
     setIsAwakening(true);
     
-    // Simulate mystical awakening process
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Here you would normally make an API call to authenticate/register
-    // For now, we'll simulate success
-    onLoginSuccess({
-      sacredName: formData.username.trim(),
-      isReturning: isReturning || false
-    });
+    try {
+      // 根据是否是返回用户调用不同的API
+      let userData;
+      
+      if (isReturning) {
+        // 登录
+        userData = await authAPI.login({
+          email: formData.email.trim(),
+          password: formData.password
+        });
+      } else {
+        // 注册
+        userData = await authAPI.register({
+          username: formData.username.trim(),
+          email: formData.email.trim(),
+          password: formData.password
+        });
+      }
+      
+      // 登录成功
+      onLoginSuccess({
+        sacredName: userData.username || formData.username.trim(),
+        isReturning: isReturning || false,
+        token: userData.token,
+        email: userData.email,
+        _id: userData._id
+      });
+    } catch (err: any) {
+      setError(err.message || '灵魂连接失败，请再次尝试');
+    } finally {
+      setIsAwakening(false);
+    }
   };
 
   // Initial threshold - choosing path
@@ -248,6 +284,28 @@ export default function SoulChronicleLogin({ onLoginSuccess, onCancel }: SoulChr
                 {isReturning 
                   ? "The name that echoes through your spiritual journey"
                   : "This name will be your eternal identifier in the mystical realm"
+                }
+              </p>
+            </div>
+            
+            {/* Email Input */}
+            <div>
+              <label className="block text-[#FFFFFF] font-semibold mb-3 text-lg">
+                <BookOpen className="inline h-5 w-5 mr-2" />
+                {isReturning ? 'Your Ethereal Address (Email)' : 'Set Your Ethereal Address (Email)'}
+              </label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                className="w-full px-6 py-4 h-16 rounded-2xl bg-[#101118]/70 border border-[#8A2BE2]/30 text-[#FFFFFF] placeholder-[#A0A0A0] focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] focus:border-transparent text-lg"
+                placeholder={isReturning ? "Enter your ethereal address..." : "Create your ethereal address..."}
+                autoComplete="email"
+              />
+              <p className="text-[#A0A0A0] text-sm mt-2 italic">
+                {isReturning 
+                  ? "The ethereal channel through which we shall commune"
+                  : "This address will be used to reconnect with your spiritual journey"
                 }
               </p>
             </div>

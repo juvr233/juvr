@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
@@ -12,6 +11,9 @@ import ZhouyiPage from './pages/ZhouyiPage';
 import StarAstrologyPage from './pages/StarAstrologyPage';
 import BaziAnalysisPage from './pages/BaziAnalysisPage';
 import HolisticDivinationPage from './pages/HolisticDivinationPage';
+import PurchasePage from './pages/PurchasePage';
+import SuccessPage from './pages/payment/SuccessPage';
+import CancelPage from './pages/payment/CancelPage';
 import { NumerologyProvider } from './context/NumerologyContext';
 import { ThemeProvider } from './context/ThemeContext';
 
@@ -33,6 +35,9 @@ function App() {
               <Route path="/star-astrology" element={<StarAstrologyPage />} />
               <Route path="/bazi-analysis" element={<BaziAnalysisPage />} />
               <Route path="/holistic-divination" element={<HolisticDivinationPage />} />
+              <Route path="/purchase" element={<PurchasePage returnUrl="/" />} />
+              <Route path="/payment/success" element={<SuccessPage />} />
+              <Route path="/payment/cancel" element={<CancelPage />} />
             </Routes>
           </Layout>
         </Router>
