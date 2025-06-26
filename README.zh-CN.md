@@ -1,32 +1,32 @@
-# Zenith Destiny - 命运之巅
+# Zenith Destiny - Peak of Fate
 
-## 个性化命理测试与产品推荐平台
+## Personalized Numerology Testing and Product Recommendation Platform
 
-这是一个基于React、TypeScript和Tailwind CSS构建的命理测试平台，提供个性化的命理解析和产品推荐。
+This is a numerology testing platform built with React, TypeScript, and Tailwind CSS that provides personalized numerological analysis and product recommendations.
 
-### 功能特性
+### Key Features
 
-- **命理计算器**：计算生命路径数、表达数、灵魂渴望数等
-- **塔罗牌解读**：支持塔罗牌占卜和解读
-- **周易卦象**：提供周易六十四卦解读
-- **兼容性分析**：分析不同命理数字之间的兼容性
-- **个人中心**：管理用户信息和测试历史
+- **Numerology Calculator**: Calculate life path number, expression number, soul urge number, etc.
+- **Tarot Reading**: Support for tarot divination and interpretation
+- **I Ching Hexagrams**: Provide interpretations for the 64 hexagrams of I Ching
+- **Compatibility Analysis**: Analyze compatibility between different numerology numbers
+- **User Profile**: Manage user information and testing history
 
-### 快速开始
+### Quick Start
 
 ```bash
-# 安装依赖
+# Install dependencies
 npm install
 
-# 启动开发服务器
+# Start development server
 npm run dev
 ```
 
-### 项目详情
+### Project Details
 
-详细的项目信息请查看[开发文档-优化版.md](./开发文档-优化版.md)，了解架构设计和开发规划。
+For detailed project information, please check the [Development Documentation](./开发文档-优化版.md) to understand the architecture design and development plans.
 
-### 技术栈
+### Technology Stack
 
 - React 18
 - TypeScript
@@ -34,10 +34,10 @@ npm run dev
 - Vite
 - React Router DOM
 
-### 开发团队
+### Development Team
 
-本项目是一个开源项目，欢迎贡献！
+This is an open-source project, contributions are welcome!
 
-### 许可证
+### License
 
 MIT

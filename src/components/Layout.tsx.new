@@ -24,16 +24,16 @@ export default function Layout({ children }: LayoutProps) {
   }, []);
 
   const navigation = [
-    { name: '首页', href: '/', icon: Sparkles },
-    { name: '命理计算器', href: '/calculator', icon: Calculator },
-    { name: '塔罗牌', href: '/tarot?cards=3', icon: Zap },
-    { name: '周易', href: '/zhouyi', icon: BookOpen },
-    { name: '八字分析', href: '/bazi-analysis', icon: Calendar },
-    { name: '星座星相', href: '/star-astrology', icon: Star },
-    { name: '综合占卜', href: '/holistic-divination', icon: Scroll },
-    { name: '兼容性分析', href: '/compatibility', icon: Users },
-    { name: '个人中心', href: '/profile', icon: User },
-    { name: '关于我们', href: '/about', icon: Info },
+    { name: 'Home', href: '/', icon: Sparkles },
+    { name: 'Calculator', href: '/calculator', icon: Calculator },
+    { name: 'Tarot', href: '/tarot?cards=3', icon: Zap },
+    { name: 'zhouyi', href: '/zhouyi', icon: BookOpen },
+    { name: 'Analysis', href: '/bazi-analysis', icon: Calendar },
+    { name: 'Astrology', href: '/star-astrology', icon: Star },
+    { name: 'Divination', href: '/holistic-divination', icon: Scroll },
+    { name: 'Compatibility', href: '/compatibility', icon: Users },
+    { name: 'Profile', href: '/profile', icon: User },
+    { name: 'About Us', href: '/about', icon: Info },
   ];
 
   const isActive = (path: string) => {
@@ -239,21 +239,21 @@ export default function Layout({ children }: LayoutProps) {
                 <motion.div animate={{ rotate: [0, 10, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}>
                   <Sparkles className="h-6 w-6 text-[--accent-primary]" />
                 </motion.div>
-                <span className="text-xl font-bold text-theme-primary">命运之巅</span>
+                <span className="text-xl font-bold text-theme-primary">Peak of Destiny</span>
               </div>
               <p className="text-theme-secondary mb-4 max-w-md">
-                通过古老的数字命理、塔罗牌和周易智慧，探索你的人生道路。
-                获取个性化的洞见和指导，助你踏上人生旅程。
+                Explore your life path through ancient numerology, Tarot cards, and I Ching wisdom.
+                Gain personalized insights and guidance to help you navigate your life's journey.
               </p>
               <div className="flex space-x-4">
                 <div className="text-theme-secondary text-sm">
-                  <p>&copy; 2025 命运之巅. 保留所有权利.</p>
+                  <p>&copy; 2025 Peak of Destiny. All Rights Reserved.</p>
                 </div>
               </div>
             </div>
 
             <div>
-              <h3 className="text-theme-primary font-semibold mb-4">快速链接</h3>
+              <h3 className="text-theme-primary font-semibold mb-4">Quick Link</h3>
               <div className="space-y-2">
                 {navigation.map((item, i) => (
                   <motion.div 
@@ -274,13 +274,13 @@ export default function Layout({ children }: LayoutProps) {
             </div>
 
             <div>
-              <h3 className="text-theme-primary font-semibold mb-4">服务项目</h3>
+              <h3 className="text-theme-primary font-semibold mb-4">Services</h3>
               <div className="space-y-2 text-theme-secondary">
-                <p>个性化命理分析</p>
-                <p>塔罗牌占卜解读</p>
-                <p>周易六十四卦解析</p>
-                <p>兼容性和关系分析</p>
-                <p>全方位命理咨询</p>
+                <p>Personalized Numerology Analysis</p>
+                <p>Tarot Card Readings and Interpretations</p>
+                <p>I Ching Hexagram Interpretations</p>
+                <p> and Relationship Analysis</p>
+                <p>Comprehensive Numerology Consultation</p>
               </div>
             </div>
           </div>
