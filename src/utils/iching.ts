@@ -94,37 +94,85 @@ export const TRIGRAMS = {
   "Lake": { symbol: "☱", element: "Metal", attribute: "Joyous" }
 };
 
+// Line types mapping for calculations
+type LineValue = 6 | 7 | 8 | 9; // 6-old yin, 7-young yang, 8-young yin, 9-old yang
+type LineConfig = [boolean, boolean, boolean]; // 3 coin configuration
+
+// Helper function to convert binary code to hexagram ID
+export function binaryToHexagramId(binary: string): number {
+  // In the traditional I Ching order, each hexagram has a specific position
+  // This mapping function converts a binary representation to the standard I Ching number
+  const traditionalOrder: { [key: string]: number } = {
+    "111111": 1, "000000": 2, "100010": 3, "010001": 4, "111010": 5, "010111": 6,
+    "010000": 7, "000010": 8, "111011": 9, "110111": 10, "111000": 11, "000111": 12,
+    "101111": 13, "111101": 14, "001000": 15, "000100": 16, "100110": 17, "011001": 18,
+    "110000": 19, "000011": 20, "100101": 21, "101001": 22, "000001": 23, "100000": 24,
+    "100111": 25, "111001": 26, "100001": 27, "011110": 28, "010010": 29, "101101": 30,
+    "001110": 31, "011100": 32, "001111": 33, "111100": 34, "000101": 35, "101000": 36,
+    "101011": 37, "110101": 38, "001010": 39, "010100": 40, "110001": 41, "100011": 42,
+    "111110": 43, "011111": 44, "000110": 45, "011000": 46, "010110": 47, "011010": 48,
+    "101110": 49, "011101": 50, "100100": 51, "001001": 52, "001011": 53, "110100": 54,
+    "101100": 55, "001101": 56, "011011": 57, "110110": 58, "010011": 59, "110010": 60,
+    "110011": 61, "001100": 62, "101010": 63, "010101": 64
+  };
+  return traditionalOrder[binary] || 1; // Default to Qian if not found
+}
+
 // Generate hexagram through traditional coin method
-export function generateHexagram(): { hexagram: Hexagram; changingLines: number[] } {
+export function generateHexagram(): { hexagram: Hexagram; changingLines: number[]; lineValues: LineValue[] } {
   const lines: HexagramLine[] = [];
   const changingLines: number[] = [];
+  const lineValues: LineValue[] = [];
+  
+  // Binary representation of the hexagram (yang=1, yin=0)
+  let binaryCode = "";
   
   // Generate 6 lines using traditional 3-coin method
   for (let i = 0; i < 6; i++) {
-    const coins = [Math.random() < 0.5, Math.random() < 0.5, Math.random() < 0.5];
-    const heads = coins.filter(coin => coin).length;
+    const coins: LineConfig = [
+      Math.random() < 0.5, // true = heads(3), false = tails(2)
+      Math.random() < 0.5,
+      Math.random() < 0.5
+    ];
+    
+    const headsCount = coins.filter(coin => coin).length;
     
     let lineType: 'yin' | 'yang' | 'changing-yin' | 'changing-yang';
+    let lineValue: LineValue;
     
-    switch (heads) {
-      case 0: // 3 tails - changing yin (old yin)
+    switch (headsCount) {
+      case 0: // 3 tails (2+2+2=6) - changing yin (old yin)
         lineType = 'changing-yin';
+        lineValue = 6;
         changingLines.push(i + 1);
+        binaryCode += "0"; // Yin line (changes to yang)
         break;
-      case 1: // 2 tails, 1 head - yang
+      case 1: // 1 head, 2 tails (3+2+2=7) - yang
         lineType = 'yang';
+        lineValue = 7;
+        binaryCode += "1"; // Yang line
         break;
-      case 2: // 1 tail, 2 heads - yin
+      case 2: // 2 heads, 1 tail (3+3+2=8) - yin
         lineType = 'yin';
+        lineValue = 8;
+        binaryCode += "0"; // Yin line
         break;
-      case 3: // 3 heads - changing yang (old yang)
+      case 3: // 3 heads (3+3+3=9) - changing yang (old yang)
         lineType = 'changing-yang';
+        lineValue = 9;
         changingLines.push(i + 1);
+        binaryCode += "1"; // Yang line (changes to yin)
         break;
       default:
         lineType = 'yin';
+        lineValue = 8;
+        binaryCode += "0";
     }
     
+    lineValues.push(lineValue);
+    
+    // Find line text from original hexagram if possible
+    // This would require a complete database of all line readings
     lines.push({
       position: i + 1,
       type: lineType,
@@ -133,14 +181,22 @@ export function generateHexagram(): { hexagram: Hexagram; changingLines: number[
     });
   }
   
-  // For simplicity, we'll use a basic mapping to select hexagrams
-  // In a full implementation, this would calculate based on trigram combinations
-  const hexagramIndex = Math.floor(Math.random() * HEXAGRAMS.length);
-  const selectedHexagram = { ...HEXAGRAMS[hexagramIndex], lines };
+  // Get the correct hexagram by binary code
+  const hexagramId = binaryToHexagramId(binaryCode);
+  let selectedHexagram = HEXAGRAMS.find(h => h.id === hexagramId);
+  
+  // If hexagram not found (in case our database is incomplete), use a default
+  if (!selectedHexagram) {
+    selectedHexagram = HEXAGRAMS[0]; // Default to first hexagram
+  }
+  
+  // Combine hexagram data with generated lines
+  const finalHexagram = { ...selectedHexagram, lines };
   
   return {
-    hexagram: selectedHexagram,
-    changingLines
+    hexagram: finalHexagram,
+    changingLines,
+    lineValues
   };
 }
 
@@ -149,17 +205,51 @@ export function getHexagramById(id: number): Hexagram | undefined {
   return HEXAGRAMS.find(hex => hex.id === id);
 }
 
+// Generate transformed hexagram from original hexagram and changing lines
+export function generateTransformedHexagram(
+  originalBinary: string, 
+  changingLines: number[]
+): Hexagram | undefined {
+  if (changingLines.length === 0) return undefined;
+  
+  // Convert binary string to array for easier manipulation
+  const binaryArray = originalBinary.split('');
+  
+  // Flip each changing line (0->1 or 1->0)
+  changingLines.forEach(linePos => {
+    // Adjust for zero-indexing
+    const index = linePos - 1;
+    binaryArray[index] = binaryArray[index] === '0' ? '1' : '0';
+  });
+  
+  // Convert back to string
+  const transformedBinary = binaryArray.join('');
+  
+  // Get the transformed hexagram ID
+  const transformedId = binaryToHexagramId(transformedBinary);
+  return getHexagramById(transformedId);
+}
+
+// Convert hexagram to binary representation
+export function hexagramToBinary(hexagram: Hexagram): string {
+  let binary = "";
+  for (const line of hexagram.lines) {
+    binary += line.type.includes('yang') ? "1" : "0";
+  }
+  return binary;
+}
+
 // Generate reading with question context
 export function generateIChinReading(question: string): IChinReading {
   const { hexagram, changingLines } = generateHexagram();
   
-  let transformedHexagram: Hexagram | undefined;
-  if (changingLines.length > 0) {
-    // In a full implementation, this would calculate the transformed hexagram
-    // For now, we'll use a simple approach
-    const transformedIndex = (hexagram.id % HEXAGRAMS.length);
-    transformedHexagram = HEXAGRAMS[transformedIndex];
-  }
+  // Get binary representation of the original hexagram
+  const originalBinary = hexagramToBinary(hexagram);
+  
+  // Generate transformed hexagram if there are changing lines
+  const transformedHexagram = changingLines.length > 0 
+    ? generateTransformedHexagram(originalBinary, changingLines) 
+    : undefined;
   
   return {
     hexagram,

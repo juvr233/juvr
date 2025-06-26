@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Sparkles, RotateCcw, BookOpen, Mountain, Waves, ArrowRight, User, Calendar, Users } from 'lucide-react';
-import { generateIChinReading, QUESTION_GUIDANCE, type IChinReading, type Hexagram } from '../utils/iching';
+import { Sparkles, RotateCcw, BookOpen, Mountain, Waves, ArrowRight, User, Calendar, Users, ArrowDownUp } from 'lucide-react';
+import { generateIChinReading, QUESTION_GUIDANCE, type IChinReading } from '../utils/iching';
 import SoulChronicleLogin from '../components/SoulChronicleLogin';
+import HexagramDisplay from '../components/HexagramDisplay';
+import HexagramAnalysis from '../components/HexagramAnalysis';
 
 interface ZhouyiState {
   phase: 'welcome' | 'birthInfo' | 'question' | 'casting' | 'cast' | 'login' | 'interpretation';
@@ -86,33 +88,7 @@ export default function ZhouyiPage() {
     });
   };
 
-  const renderHexagramLines = (hexagram: Hexagram) => {
-    return (
-      <div className="flex flex-col items-center space-y-2">
-        {hexagram.lines.slice().reverse().map((line, index) => {
-          const isChanging = line.type.includes('changing');
-          const isYang = line.type.includes('yang');
-          
-          return (
-            <div key={index} className="relative">
-              <div className={`w-16 h-2 rounded ${
-                isYang 
-                  ? 'bg-[#C0A573]' 
-                  : 'bg-[#C0A573] relative'
-              } ${isChanging ? 'animate-pulse' : ''}`}>
-                {!isYang && (
-                  <div className="absolute inset-y-0 left-1/2 transform -translate-x-1/2 w-2 bg-[#2C2A4A]"></div>
-                )}
-              </div>
-              {isChanging && (
-                <div className="absolute -right-6 top-0 w-2 h-2 bg-red-400 rounded-full animate-ping"></div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
+
 
   return (
     <div className="min-h-screen py-12 bg-gradient-to-b from-[#1a1830] via-[#2C2A4A] to-[#1a1830]">
@@ -596,13 +572,23 @@ export default function ZhouyiPage() {
                 <div className="relative mb-12">
                   <div className="flex justify-center items-center mb-8">
                     <div className="bg-[#2C2A4A]/70 rounded-2xl p-8 border border-[#C0A573]/30">
-                      <h3 className="text-2xl font-bold text-[#F0F0F0] mb-4">
-                        {state.reading.hexagram.name} ({state.reading.hexagram.chineseName})
-                      </h3>
-                      {renderHexagramLines(state.reading.hexagram)}
-                      <p className="text-[#C0A573] mt-4 italic">
-                        {state.reading.hexagram.trigrams.upper} over {state.reading.hexagram.trigrams.lower}
-                      </p>
+                      <HexagramDisplay 
+                        hexagram={state.reading.hexagram}
+                        changingLines={state.reading.changingLines}
+                        showDetails={false}
+                      />
+                      {state.reading.transformedHexagram && (
+                        <div className="mt-8 pt-8 border-t border-[#C0A573]/20">
+                          <div className="flex items-center justify-center mb-6">
+                            <ArrowDownUp className="text-[#C0A573] h-10 w-10 animate-pulse" />
+                          </div>
+                          <HexagramDisplay 
+                            hexagram={state.reading.transformedHexagram}
+                            isTransformed={true}
+                            showDetails={false}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -684,31 +670,44 @@ export default function ZhouyiPage() {
 
               {/* Hexagram Presentation */}
               <div className="bg-[#2C2A4A]/70 rounded-3xl p-8 border border-[#C0A573]/20 mb-12">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                  <div className="text-center">
-                    <h3 className="text-3xl font-bold text-[#F0F0F0] mb-4">
-                      {state.reading.hexagram.name}
-                    </h3>
-                    <p className="text-2xl text-[#C0A573] mb-6">
-                      {state.reading.hexagram.chineseName}
-                    </p>
-                    {renderHexagramLines(state.reading.hexagram)}
-                    <p className="text-[#C0A573] mt-4">
-                      {state.reading.hexagram.trigrams.upper} over {state.reading.hexagram.trigrams.lower}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <h4 className="text-xl font-bold text-[#C0A573] mb-4">Hexagram Statement:</h4>
-                    <p className="text-[#F0F0F0] text-lg italic mb-6 leading-relaxed">
-                      "{state.reading.hexagram.judgment}"
-                    </p>
-                    <h4 className="text-xl font-bold text-[#C0A573] mb-4">The Image:</h4>
-                    <p className="text-[#F0F0F0] leading-relaxed">
-                      {state.reading.hexagram.image}
-                    </p>
-                  </div>
+                <div className="mb-8 border-b border-[#C0A573]/20 pb-8">
+                  <HexagramDisplay 
+                    hexagram={state.reading.hexagram}
+                    changingLines={state.reading.changingLines}
+                    showDetails={true}
+                  />
                 </div>
+                
+                {state.reading.transformedHexagram && (
+                  <div className="mt-12 pt-6">
+                    <div className="flex items-center justify-center space-x-4 mb-8">
+                      <div className="h-px bg-[#C0A573]/30 w-32"></div>
+                      <div className="bg-[#2C2A4A] border border-[#C0A573]/30 rounded-full p-3">
+                        <ArrowDownUp className="text-[#C0A573] h-8 w-8" />
+                      </div>
+                      <div className="h-px bg-[#C0A573]/30 w-32"></div>
+                    </div>
+                    <div className="text-center mb-6">
+                      <h3 className="text-2xl font-bold text-[#C0A573]">变卦 (Transformed Hexagram)</h3>
+                      <p className="text-[#F0F0F0] text-lg mt-2">
+                        Based on your changing lines, we now have a second hexagram that reveals your future path
+                      </p>
+                    </div>
+                    <HexagramDisplay 
+                      hexagram={state.reading.transformedHexagram}
+                      isTransformed={true}
+                      showDetails={true}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* 五行分析 */}
+              <div className="mb-8">
+                <HexagramAnalysis 
+                  upperTrigram={state.reading.hexagram.trigrams.upper} 
+                  lowerTrigram={state.reading.hexagram.trigrams.lower} 
+                />
               </div>
 
               {/* Interpretation */}

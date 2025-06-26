@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { User, BookOpen, Sparkles, Eye, EyeOff, ArrowRight, Lock } from 'lucide-react';
 
 interface SoulChronicleLoginProps {
@@ -57,11 +57,10 @@ export default function SoulChronicleLogin({ onLoginSuccess, onCancel }: SoulChr
 
   // Initial threshold - choosing path
   if (isReturning === null) {
-    return (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-        <div className="max-w-2xl w-full">
+    return (        <div className="flex items-center justify-center z-50">
+        <div className="w-[650px]">
           {/* Ancient Door/Book Visual */}
-          <div className="bg-gradient-to-br from-[#101118] via-[#22232E] to-[#101118] rounded-3xl p-12 border border-[#8A2BE2]/30 shadow-2xl relative overflow-hidden">
+          <div className="bg-gradient-to-br from-[#101118] via-[#22232E] to-[#101118] rounded-3xl p-12 border border-[#8A2BE2]/30 shadow-2xl relative">
             
             {/* Mystical Background Effects */}
             <div className="absolute inset-0 opacity-20">
@@ -166,10 +165,9 @@ export default function SoulChronicleLogin({ onLoginSuccess, onCancel }: SoulChr
   }
 
   // Soul Chronicle Awakening Form
-  return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-      <div className="max-w-2xl w-full">
-        <div className="bg-gradient-to-br from-[#101118] via-[#22232E] to-[#101118] rounded-3xl p-12 border border-[#8A2BE2]/30 shadow-2xl relative overflow-hidden">
+  return (      <div className="flex items-center justify-center z-50">
+      <div className="w-[650px]">
+        <div className="bg-gradient-to-br from-[#101118] via-[#22232E] to-[#101118] rounded-3xl p-12 border border-[#8A2BE2]/30 shadow-2xl relative">
           
           {/* Mystical Background Effects */}
           <div className="absolute inset-0 opacity-20">
@@ -242,7 +240,7 @@ export default function SoulChronicleLogin({ onLoginSuccess, onCancel }: SoulChr
                 type="text"
                 value={formData.username}
                 onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                className="w-full px-6 py-4 rounded-2xl bg-[#101118]/70 border border-[#8A2BE2]/30 text-[#FFFFFF] placeholder-[#A0A0A0] focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] focus:border-transparent text-lg"
+                className="w-full px-6 py-4 h-16 rounded-2xl bg-[#101118]/70 border border-[#8A2BE2]/30 text-[#FFFFFF] placeholder-[#A0A0A0] focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] focus:border-transparent text-lg"
                 placeholder={isReturning ? "Enter your sacred name..." : "Create your sacred name..."}
                 autoComplete="username"
               />
@@ -265,7 +263,7 @@ export default function SoulChronicleLogin({ onLoginSuccess, onCancel }: SoulChr
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
                   onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                  className="w-full px-6 py-4 rounded-2xl bg-[#101118]/70 border border-[#8A2BE2]/30 text-[#FFFFFF] placeholder-[#A0A0A0] focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] focus:border-transparent text-lg pr-14"
+                  className="w-full px-6 py-4 h-16 rounded-2xl bg-[#101118]/70 border border-[#8A2BE2]/30 text-[#FFFFFF] placeholder-[#A0A0A0] focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] focus:border-transparent text-lg pr-14"
                   placeholder={isReturning ? "Enter your soul essence key..." : "Create your soul essence key..."}
                   autoComplete={isReturning ? "current-password" : "new-password"}
                 />
@@ -297,7 +295,7 @@ export default function SoulChronicleLogin({ onLoginSuccess, onCancel }: SoulChr
                     type={showConfirmPassword ? "text" : "password"}
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                    className="w-full px-6 py-4 rounded-2xl bg-[#101118]/70 border border-[#8A2BE2]/30 text-[#FFFFFF] placeholder-[#A0A0A0] focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] focus:border-transparent text-lg pr-14"
+                    className="w-full px-6 py-4 h-16 rounded-2xl bg-[#101118]/70 border border-[#8A2BE2]/30 text-[#FFFFFF] placeholder-[#A0A0A0] focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] focus:border-transparent text-lg pr-14"
                     placeholder="Confirm your soul essence key..."
                     autoComplete="new-password"
                   />
@@ -332,7 +330,7 @@ export default function SoulChronicleLogin({ onLoginSuccess, onCancel }: SoulChr
             <button
               onClick={handleSoulAwakening}
               disabled={isAwakening || !formData.username.trim() || !formData.password.trim() || (!isReturning && !formData.confirmPassword.trim())}
-              className="w-full bg-gradient-to-r from-[#8A2BE2] to-[#FF00FF] text-[#FFFFFF] font-bold py-6 px-8 rounded-2xl hover:from-[#FF00FF] hover:to-[#8A2BE2] transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-xl"
+              className="w-full h-20 bg-gradient-to-r from-[#8A2BE2] to-[#FF00FF] text-[#FFFFFF] font-bold py-6 px-8 rounded-2xl hover:from-[#FF00FF] hover:to-[#8A2BE2] transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-xl"
             >
               {isAwakening ? (
                 <div className="flex items-center justify-center space-x-3">

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Heart, Users, Calculator, ArrowRight, Star } from 'lucide-react';
+import { useState } from 'react';
+import { Heart, Users, Calculator, ArrowRight, Star, ChevronDown, ChevronUp } from 'lucide-react';
 import { calculateLifePath, calculateCompatibility } from '../utils/numerology';
+import CompatibilityAnalysis from '../components/CompatibilityAnalysis';
 
 interface CompatibilityResult {
   score: number;
@@ -20,6 +21,7 @@ export default function CompatibilityPage() {
   });
   const [result, setResult] = useState<CompatibilityResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [showDetailedAnalysis, setShowDetailedAnalysis] = useState(false);
 
   const handleCalculate = async () => {
     if (!person1.name || !person1.birthDate || !person2.name || !person2.birthDate) {
@@ -49,13 +51,7 @@ export default function CompatibilityPage() {
     setIsCalculating(false);
   };
 
-  const getScoreColor = (score: number) => {
-    return 'text-[#C0A573]';
-  };
 
-  const getScoreGradient = (score: number) => {
-    return 'bg-[#C0A573]';
-  };
 
   return (
     <div className="min-h-screen py-12">
@@ -162,12 +158,12 @@ export default function CompatibilityPage() {
             <div className="space-y-8">
               {/* Compatibility Score */}
               <div className="text-center">
-                <div className={`text-6xl font-bold ${getScoreColor(result.score)} mb-4`}>
+                <div className="text-6xl font-bold text-[#C0A573] mb-4">
                   {result.score}%
                 </div>
                 <div className="w-full bg-[#2C2A4A] rounded-full h-4 mb-6">
                   <div 
-                    className={`${getScoreGradient(result.score)} h-4 rounded-full transition-all duration-1000 ease-out`}
+                    className="bg-[#C0A573] h-4 rounded-full transition-all duration-1000 ease-out"
                     style={{ width: `${result.score}%` }}
                   ></div>
                 </div>
@@ -238,6 +234,37 @@ export default function CompatibilityPage() {
                   </div>
                 </div>
               </div>
+              
+              {/* 详细分析按钮 */}
+              <div className="text-center mt-10">
+                <button
+                  onClick={() => setShowDetailedAnalysis(!showDetailedAnalysis)}
+                  className="flex items-center space-x-2 mx-auto bg-[#2C2A4A] text-[#C0A573] px-6 py-3 rounded-lg border border-[#C0A573]/30 hover:bg-[#3C3A5A] transition-colors"
+                >
+                  <span>详细兼容性分析</span>
+                  {showDetailedAnalysis ? (
+                    <ChevronUp className="h-5 w-5" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+              
+              {/* 详细兼容性分析 */}
+              {showDetailedAnalysis && (
+                <CompatibilityAnalysis
+                  person1={{
+                    name: person1.name,
+                    birthDate: person1.birthDate,
+                    number: result.person1Number
+                  }}
+                  person2={{
+                    name: person2.name,
+                    birthDate: person2.birthDate,
+                    number: result.person2Number
+                  }}
+                />
+              )}
             </div>
           )}
         </div>

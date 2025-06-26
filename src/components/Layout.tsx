@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Sparkles, Menu, X, Calculator, Users, User, Info, Zap, BookOpen } from 'lucide-react';
+import { Sparkles, Menu, X, Calculator, Users, User, Info, Zap, BookOpen, Star, Calendar, Scroll } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -15,6 +15,9 @@ export default function Layout({ children }: LayoutProps) {
     { name: 'Calculator', href: '/calculator', icon: Calculator },
     { name: 'Tarot', href: '/tarot?cards=3', icon: Zap },
     { name: 'Zhouyi', href: '/zhouyi', icon: BookOpen },
+    { name: 'Bazi Analysis', href: '/bazi-analysis', icon: Calendar },
+    { name: 'Star Astrology', href: '/star-astrology', icon: Star },
+    { name: 'Holistic Divination', href: '/holistic-divination', icon: Scroll },
     { name: 'Compatibility', href: '/compatibility', icon: Users },
     { name: 'Profile', href: '/profile', icon: User },
     { name: 'About', href: '/about', icon: Info },
