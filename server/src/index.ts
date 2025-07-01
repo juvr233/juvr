@@ -8,6 +8,10 @@ import authRoutes from './routes/auth.routes';
 import paymentRoutes from './routes/payment.routes';
 import tarotRoutes from './routes/tarot.routes';
 import iChingRoutes from './routes/iching.routes';
+import homeRoutes from './routes/home.routes';
+import historyRoutes from './routes/history.routes';
+import divinationRoutes from './routes/divination.routes';
+import aiRoutes from './routes/ai.routes';
 import { logger } from './config/logger';
 
 // 加载环境变量
@@ -45,6 +49,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/tarot', tarotRoutes);
 app.use('/api/iching', iChingRoutes);
+app.use('/api/home', homeRoutes);
+app.use('/api/history', historyRoutes);
+app.use('/api/divination', divinationRoutes);
+app.use('/api/ai', aiRoutes);
 
 // 健康检查端点
 app.get('/health', (req: Request, res: Response) => {
