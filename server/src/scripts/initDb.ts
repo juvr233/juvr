@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import PaidService from '../models/paidService.model';
+import User from '../models/user.model';
 import { logger } from '../config/logger';
 import dotenv from 'dotenv';
 
@@ -61,6 +62,33 @@ const initializeDatabase = async () => {
     // 将服务插入数据库
     await PaidService.insertMany(paidServices);
     logger.info('付费服务数据初始化完成');
+    
+    // 创建测试用户账户
+    // 先检查是否已存在指定ID的用户
+    const existingUser = await User.findOne({ 
+      $or: [
+        { _id: '507f1f77bcf86cd799439011' }, 
+        { email: 'test@example.com' },
+        { username: 'testUser' }
+      ] 
+    });
+    
+    if (!existingUser) {
+      // 创建具有指定ID的测试用户
+      const testUser = new User({
+        _id: '507f1f77bcf86cd799439011', // 指定ID
+        username: 'testUser',
+        email: 'test@example.com',
+        password: 'Test@123', // 会通过pre-save钩子自动加密
+        role: 'user',
+        isActive: true
+      });
+      
+      await testUser.save();
+      logger.info('测试用户账户创建成功');
+    } else {
+      logger.info('测试用户账户已存在，跳过创建');
+    }
 
     // 断开数据库连接
     await mongoose.disconnect();
