@@ -1,0 +1,64 @@
+{
+  "modelInfo": {
+    "name": "tarot_inference_model",
+    "version": "1.0",
+    "description": "塔罗牌解读AI模型",
+    "createdAt": "2025-06-30"
+  },
+  "baseWeights": {
+    "past": 0.25,
+    "present": 0.5,
+    "future": 0.25
+  },
+  "cardMapping": {
+    "The Fool": {
+      "keywords": ["新的开始", "冒险", "可能性", "天真", "自发性"],
+      "sentiment": 0.8,
+      "influence": 0.7
+    },
+    "The Magician": {
+      "keywords": ["创造力", "意志力", "技能", "行动力", "掌控能力"],
+      "sentiment": 0.85,
+      "influence": 0.8
+    },
+    "The High Priestess": {
+      "keywords": ["直觉", "潜意识", "神秘", "内在声音", "智慧"],
+      "sentiment": 0.6,
+      "influence": 0.65
+    },
+    "The Empress": {
+      "keywords": ["丰饶", "母性", "创造力", "自然", "舒适"],
+      "sentiment": 0.9,
+      "influence": 0.7
+    },
+    "The Emperor": {
+      "keywords": ["权威", "结构", "领导力", "稳定", "父性"],
+      "sentiment": 0.7,
+      "influence": 0.75
+    }
+  },
+  "interpretationRules": {
+    "upright": {
+      "multiplier": 1.0,
+      "biasAdjustment": 0.1
+    },
+    "reversed": {
+      "multiplier": -0.8,
+      "biasAdjustment": -0.15
+    }
+  },
+  "spreadModifiers": {
+    "celtic_cross": {
+      "complexity": 0.9,
+      "depth": 0.85
+    },
+    "three_card": {
+      "complexity": 0.5,
+      "depth": 0.6
+    },
+    "relationship": {
+      "complexity": 0.7,
+      "depth": 0.8
+    }
+  }
+}

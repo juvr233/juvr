@@ -1,0 +1,143 @@
+version: '3.8'
+
+services:
+  # 前端和API服务（单一容器）
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGO_URI=${MONGO_URI}
+      - REDIS_URL=${REDIS_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - API_KEY=${API_KEY}
+      - AI_API_BASE_URL=${AI_API_BASE_URL}
+      - AI_API_KEY=${AI_API_KEY}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - SHOPIFY_API_KEY=${SHOPIFY_API_KEY}
+      - SHOPIFY_API_SECRET=${SHOPIFY_API_SECRET}
+      - SHOPIFY_STOREFRONT_TOKEN=${SHOPIFY_STOREFRONT_TOKEN}
+      - SHOPIFY_ADMIN_TOKEN=${SHOPIFY_ADMIN_TOKEN}
+    volumes:
+      - app_logs:/app/logs
+      - app_backups:/app/backups
+    depends_on:
+      - mongo
+      - redis
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 5
+        window: 120s
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - app_network
+
+  # MongoDB数据库
+  mongo:
+    image: mongo:5
+    restart: always
+    command: ["--auth", "--bind_ip_all", "--wiredTigerCacheSizeGB=1"]
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=divination
+    volumes:
+      - mongo_data:/data/db
+      - mongo_config:/data/configdb
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - app_network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # Nginx反向代理
+  nginx:
+    image: nginx:stable-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - app
+    networks:
+      - app_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  # 备份服务
+  backup:
+    image: alpine:latest
+    restart: always
+    volumes:
+      - mongo_data:/data/db:ro
+      - ./backups:/backups
+      - ./scripts/backup.sh:/backup.sh:ro
+    environment:
+      - BACKUP_DIR=/backups
+      - BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-30}
+      - MONGO_URI=${MONGO_URI}
+    entrypoint: ["/bin/sh", "-c", "chmod +x /backup.sh && crond -f"]
+    networks:
+      - app_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 128M
+
+volumes:
+  app_logs:
+  app_backups:
+  mongo_data:
+  mongo_config:
+  redis_data:
+  nginx_logs:
+
+networks:
+  app_network:
+    driver: bridge 

@@ -1,0 +1,154 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom 3D flip animation utilities */
+@layer utilities {
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  
+  .transform-style-preserve-3d {
+    transform-style: preserve-3d;
+  }
+  
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+  
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  .animate-shimmer {
+    animation: shimmer 2s ease-in-out infinite;
+  }
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50% {
+    transform: translateX(100%);
+    opacity: 1;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* 自定义主题变量 */
+:root {
+  /* 暗色主题变量 - 默认 */
+  --bg-primary: #101118;
+  --bg-secondary: #22232E;
+  --accent-primary: #8A2BE2;
+  --accent-secondary: #FF00FF;
+  --text-primary: #FFFFFF;
+  --text-secondary: #A0A0A0;
+  --border-color: rgba(138, 43, 226, 0.2);
+  --card-bg: #22232E;
+  --card-hover: #2A2C38;
+  --input-bg: #1C1D28;
+  --button-hover: #9933FF;
+  --shadow-color: rgba(138, 43, 226, 0.3);
+}
+
+/* 为亮色模式设置CSS变量 */
+.light {
+  --bg-primary: #F5F8FF;
+  --bg-secondary: #EAEEFF;
+  --accent-primary: #8A2BE2;  
+  --accent-secondary: #FF00FF;
+  --text-primary: #1A1B25;
+  --text-secondary: #4B4C57;
+  --border-color: rgba(138, 43, 226, 0.15);
+  --card-bg: #FFFFFF;
+  --card-hover: #F0F2FF;
+  --input-bg: #FFFFFF;
+  --button-hover: #9933FF;
+  --shadow-color: rgba(138, 43, 226, 0.2);
+}
+
+/* 主题颜色类 */
+.bg-theme-primary {
+  background-color: var(--bg-primary);
+}
+
+.bg-theme-secondary {
+  background-color: var(--bg-secondary);
+}
+
+.text-theme-primary {
+  color: var(--text-primary);
+}
+
+.text-theme-secondary {
+  color: var(--text-secondary);
+}
+
+.text-theme-accent {
+  color: var(--accent-primary);
+}
+
+.border-theme {
+  border-color: var(--border-color);
+}
+
+.card-theme {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+/* 调整输入框样式适应不同主题 */
+input, textarea, select {
+  background-color: var(--input-bg);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+/* 平滑过渡 */
+.theme-transition {
+  transition: all 0.3s ease;
+}
+
+/* 添加移动端优化类 */
+.mobile-menu-item {
+  @apply flex items-center space-x-3 px-4 py-3 rounded-lg w-full;
+}
+
+.button-primary {
+  @apply bg-[--accent-primary] text-white px-6 py-2 rounded-full font-semibold hover:bg-[--button-hover] transform hover:scale-105 transition-all duration-300;
+}
+
+.button-secondary {
+  @apply bg-transparent border border-[--accent-primary] text-[--accent-primary] px-6 py-2 rounded-full font-semibold hover:bg-[--accent-primary] hover:bg-opacity-10 transform hover:scale-105 transition-all duration-300;
+}

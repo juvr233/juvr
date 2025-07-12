@@ -1,0 +1,514 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Sparkles, RotateCcw, Eye, EyeOff, ArrowRight, BookOpen, Music, VolumeX } from 'lucide-react';
+import { AUTHENTIC_RWS_DECK, shuffleDeck, getDetailedInterpretation, type TarotCard } from '../utils/tarotCards';
+import SoulChronicleLogin from '../components/SoulChronicleLogin';
+import TarotSpread from '../components/TarotSpread';
+import TarotReadingResult from '../components/TarotReadingResult';
+
+interface ReadingState {
+  phase: 'welcome' | 'question' | 'shuffling' | 'shuffled' | 'drawing' | 'drawn' | 'login' | 'analysis';
+  selectedArea: string;
+  shuffledDeck: TarotCard[];
+  drawnCards: TarotCard[];
+  cardCount: number;
+  isRevealed: boolean;
+  userSacredName?: string;
+  spreadType: 'three-card' | 'five-card' | 'celtic-cross';
+  hasBackgroundMusic: boolean;
+}
+
+const LIFE_AREAS = [
+  { 
+    key: 'love', 
+    title: '爱情的迷宫', 
+    description: '心灵的事情，关系和情感连接',
+    mysticalDesc: '探索爱情、激情和灵魂连接的复杂路径'
+  },
+  { 
+    key: 'career', 
+    title: '事业的未来', 
+    description: '职业道路，抱负和人生目标',
+    mysticalDesc: '照亮你的职业命运，发现你真正的使命'
+  },
+  { 
+    key: 'wealth', 
+    title: '财富的涟漪', 
+    description: '财务问题，富足和物质保障',
+    mysticalDesc: '探索繁荣和物质丰盛的潮起潮落'
+  },
+  { 
+    key: 'spiritual', 
+    title: '灵性的旅程', 
+    description: '个人成长，心灵和内在智慧',
+    mysticalDesc: '探索你灵魂的深处和精神进化'
+  },
+  { 
+    key: 'health', 
+    title: '健康的殿堂', 
+    description: '身体健康，活力和生命能量',
+    mysticalDesc: '了解你身体这个神圣容器和活力的奥秘'
+  }
+];
+
+const SPREAD_TYPES = [
+  {
+    key: 'three-card',
+    name: '三卡阵',
+    description: '过去、现在、未来的简单而有力的洞察',
+    cardCount: 3,
+  },
+  {
+    key: 'five-card',
+    name: '五卡十字阵',
+    description: '对当前情况、挑战和可能结果的更深入了解',
+    cardCount: 5,
+  },
+  {
+    key: 'celtic-cross',
+    name: '凯尔特十字阵',
+    description: '最全面的塔罗牌阵列，提供深入的生命指导',
+    cardCount: 10,
+  }
+];
+
+export default function TarotPage() {
+  const [searchParams] = useSearchParams();
+  const initialCardCount = parseInt(searchParams.get('cards') || '3');
+  const audioRef = useRef<HTMLAudioElement>(null);
+  
+  const [readingState, setReadingState] = useState<ReadingState>({
+    phase: 'welcome',
+    selectedArea: '',
+    shuffledDeck: [],
+    drawnCards: [],
+    cardCount: initialCardCount,
+    isRevealed: false,
+    spreadType: 'three-card',
+    hasBackgroundMusic: false
+  });
+
+  // 处理背景音乐
+  useEffect(() => {
+    if (audioRef.current) {
+      if (readingState.hasBackgroundMusic) {
+        audioRef.current.play().catch(e => console.log('音乐播放失败:', e));
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  }, [readingState.hasBackgroundMusic]);
+  
+  // 切换背景音乐
+  const toggleBackgroundMusic = () => {
+    setReadingState(prev => ({
+      ...prev,
+      hasBackgroundMusic: !prev.hasBackgroundMusic
+    }));
+  };
+
+  // 选择塔罗牌阵型
+  const handleSpreadTypeChange = (spreadType: 'three-card' | 'five-card' | 'celtic-cross') => {
+    const spreadConfig = SPREAD_TYPES.find(s => s.key === spreadType);
+    if (!spreadConfig) return;
+    
+    setReadingState(prev => ({
+      ...prev,
+      spreadType,
+      cardCount: spreadConfig.cardCount
+    }));
+  };
+
+  // 选择生活领域
+  const handleAreaSelection = (areaKey: string) => {
+    const area = LIFE_AREAS.find(a => a.key === areaKey);
+    if (!area) return;
+
+    // 进入洗牌仪式阶段
+    setReadingState(prev => ({ 
+      ...prev, 
+      selectedArea: areaKey, 
+      phase: 'shuffling'
+    }));
+
+    // 开始神圣的洗牌仪式（4秒）
+    setTimeout(() => {
+      // 执行真实的洗牌算法
+      const shuffled = shuffleDeck();
+      
+      // 自动为所选的牌阵随机抽取适当数量的牌
+      let drawnCards: TarotCard[] = [];
+      
+      if (readingState.spreadType === 'three-card' || readingState.spreadType === 'five-card') {
+        // 对于简单的阵型，自动抽牌
+        drawnCards = shuffled.slice(0, readingState.cardCount).map(card => ({
+          ...card,
+          isReversed: Math.random() > 0.7 // 30%概率逆位
+        }));
+        
+        // 直接跳到已抽牌阶段
+        setReadingState(prev => ({ 
+          ...prev, 
+          shuffledDeck: shuffled,
+          drawnCards,
+          phase: 'drawn'
+        }));
+      } else {
+        // 对于凯尔特十字阵，仍然需要手动抽牌
+        setReadingState(prev => ({ 
+          ...prev, 
+          shuffledDeck: shuffled,
+          phase: 'shuffled'
+        }));
+      }
+    }, 4000); // 4秒神圣仪式
+  };
+
+  // 从洗牌到抽牌阶段
+  const proceedToDrawing = () => {
+    setReadingState(prev => ({ 
+      ...prev, 
+      phase: 'drawing'
+    }));
+  };
+
+  // 处理卡片点击（用于手动抽牌阶段）
+  const handleCardClick = (cardIndex: number) => {
+    if (readingState.drawnCards.length >= readingState.cardCount) return;
+    
+    const selectedCard = {
+      ...readingState.shuffledDeck[cardIndex],
+      isReversed: Math.random() > 0.7 // 30%概率逆位
+    };
+    const newDrawnCards = [...readingState.drawnCards, selectedCard];
+    
+    setReadingState(prev => ({ 
+      ...prev, 
+      drawnCards: newDrawnCards
+    }));
+
+    // 如果所有卡牌都已抽取，进入"已抽取"阶段
+    if (newDrawnCards.length === readingState.cardCount) {
+      setTimeout(() => {
+        setReadingState(prev => ({ 
+          ...prev, 
+          phase: 'drawn'
+        }));
+      }, 500); // 最小延迟，实现平滑过渡
+    }
+  };
+
+  // 从抽牌到登录阶段
+  const proceedToReveal = () => {
+    setReadingState(prev => ({ 
+      ...prev, 
+      phase: 'login'
+    }));
+  };
+
+  // 处理成功登录/注册
+  const handleLoginSuccess = (userData: { sacredName: string; isReturning: boolean }) => {
+    setReadingState(prev => ({ 
+      ...prev, 
+      phase: 'analysis',
+      isRevealed: true,
+      userSacredName: userData.sacredName
+    }));
+  };
+
+  // 处理取消登录
+  const handleLoginCancel = () => {
+    setReadingState(prev => ({ 
+      ...prev, 
+      phase: 'drawn'
+    }));
+  };
+
+  // 重置阅读
+  const resetReading = () => {
+    setReadingState({
+      phase: 'welcome',
+      selectedArea: '',
+      shuffledDeck: [],
+      drawnCards: [],
+      cardCount: readingState.cardCount,
+      isRevealed: false,
+      spreadType: readingState.spreadType,
+      hasBackgroundMusic: readingState.hasBackgroundMusic
+    });
+  };
+
+  return (
+    <div className="min-h-screen py-12 bg-gradient-to-b from-[#101118] via-[#101118] to-[#101118]">
+      {/* 隐藏的音频播放器 */}
+      <audio 
+        ref={audioRef} 
+        src="https://s3.amazonaws.com/exp-us-standard/audio/playlist-example/Comfort_Fit_-_03_-_Sorry.mp3" 
+        loop 
+      />
+
+      <div className="max-w-7xl mx-auto px-6">
+        {/* 神秘的页眉 */}
+        <div className="text-center mb-12 relative">
+          <div className="relative">
+            <div className="bg-gradient-to-r from-[#8A2BE2]/30 to-[#8A2BE2]/10 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+              <Sparkles className="h-12 w-12 text-[#8A2BE2] animate-spin" style={{ animationDuration: '8s' }} />
+            </div>
+            <div className="absolute inset-0 bg-[#8A2BE2]/5 rounded-full blur-xl"></div>
+          </div>
+          
+          <h1 className="text-5xl md:text-6xl font-bold text-[#FFFFFF] mb-4 tracking-wide">
+            神圣塔罗牌占卜
+          </h1>
+          
+          <p className="text-xl text-[#A0A0A0] italic font-light mb-2">
+            "牌卡会对用心聆听的人诉说秘密"
+          </p>
+          
+          <p className="text-sm text-[#A0A0A0] italic">
+            正宗韦特-史密斯塔罗牌 • {readingState.spreadType === 'three-card' ? '三卡阵' : readingState.spreadType === 'five-card' ? '五卡阵' : '凯尔特十字阵'} 解读
+          </p>
+          
+          <div className="w-32 h-px bg-gradient-to-r from-transparent via-[#8A2BE2] to-transparent mx-auto mt-6"></div>
+          
+          {/* 音频控制按钮 */}
+          <button 
+            onClick={toggleBackgroundMusic}
+            className="absolute top-2 right-2 p-2 rounded-full hover:bg-purple-900/20 transition-colors"
+            title={readingState.hasBackgroundMusic ? "关闭背景音乐" : "开启背景音乐"}
+          >
+            {readingState.hasBackgroundMusic ? (
+              <Music className="h-6 w-6 text-purple-400" />
+            ) : (
+              <VolumeX className="h-6 w-6 text-purple-600/60" />
+            )}
+          </button>
+        </div>
+        
+        {/* 主要的神圣阅读室 */}
+        <div className="bg-gradient-to-br from-[#22232E]/90 to-[#101118]/90 backdrop-blur-sm rounded-3xl p-8 md:p-12 border border-[#8A2BE2]/30 shadow-2xl relative overflow-hidden">
+          {/* 神秘的背景效果 */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-[#8A2BE2] rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-[#FF00FF] rounded-full blur-3xl animate-pulse delay-1000"></div>
+          </div>
+          
+          {/* 欢迎阶段 - 神秘问候和生活领域选择 */}
+          {readingState.phase === 'welcome' && (
+            <div className="relative z-10 space-y-8">
+              <div className="text-center mb-12">
+                <h2 className="text-4xl font-bold text-[#FFFFFF] mb-6 tracking-wide">
+                  欢迎，神圣的追寻者
+                </h2>
+                <p className="text-lg text-[#D0D0D0] max-w-3xl mx-auto">
+                  塔罗牌不是预测确定的未来，而是揭示当下潜藏的能量。通过选择下面的生活领域，开启你的个人神圣旅程。
+                </p>
+              </div>
+              
+              {/* 选择塔罗牌阵型 */}
+              <div className="mb-12">
+                <h3 className="text-2xl font-semibold text-center text-purple-200 mb-6">选择塔罗牌阵型</h3>
+                <div className="flex flex-wrap justify-center gap-4">
+                  {SPREAD_TYPES.map((spread) => (
+                    <button
+                      key={spread.key}
+                      onClick={() => handleSpreadTypeChange(spread.key as any)}
+                      className={`p-4 rounded-xl border-2 transition-all ${
+                        readingState.spreadType === spread.key 
+                          ? 'border-purple-500 bg-purple-900/40 shadow-lg shadow-purple-900/30' 
+                          : 'border-purple-800/40 bg-purple-900/20 hover:bg-purple-900/30'
+                      }`}
+                    >
+                      <h4 className="text-lg font-medium text-white">{spread.name}</h4>
+                      <p className="text-sm text-gray-300">{spread.description}</p>
+                      <div className="mt-2 text-xs text-purple-300">{spread.cardCount}张牌</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* 选择生活领域 */}
+              <div>
+                <h3 className="text-2xl font-semibold text-center text-purple-200 mb-6">
+                  选择你想要探索的生活领域
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {LIFE_AREAS.map((area) => (
+                    <button
+                      key={area.key}
+                      onClick={() => handleAreaSelection(area.key)}
+                      className="p-6 border border-purple-500/30 rounded-2xl bg-gradient-to-br from-purple-900/30 to-indigo-900/20 hover:from-purple-800/40 hover:to-indigo-800/30 transition-colors group"
+                    >
+                      <h3 className="text-2xl font-semibold text-white mb-2 group-hover:text-purple-300 transition-colors">{area.title}</h3>
+                      <p className="text-gray-300">{area.description}</p>
+                      <p className="mt-3 text-sm italic text-purple-400">{area.mysticalDesc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* 洗牌阶段 */}
+          {readingState.phase === 'shuffling' && (
+            <div className="relative z-10 text-center min-h-[500px] flex flex-col items-center justify-center">
+              <div className="w-32 h-32 relative mb-6">
+                <div className="absolute inset-0 border-4 border-t-transparent border-purple-500 rounded-full animate-spin"></div>
+                <div className="absolute inset-2 border-4 border-l-transparent border-r-transparent border-indigo-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '2s' }}></div>
+                <div className="absolute inset-4 border-4 border-b-transparent border-purple-300 rounded-full animate-spin" style={{ animationDuration: '3s' }}></div>
+              </div>
+              <h2 className="text-3xl font-bold text-white mb-4">洗牌仪式进行中...</h2>
+              <p className="text-lg text-gray-300 max-w-2xl">
+                卡牌正在组合和排列，将塔罗卡片的古老智慧与你的能量场连接起来。这个神圣的仪式确保你收到的指引是为你量身定制的。
+              </p>
+            </div>
+          )}
+          
+          {/* 已洗牌，等待抽牌阶段 */}
+          {readingState.phase === 'shuffled' && (
+            <div className="relative z-10 text-center">
+              <h2 className="text-3xl font-bold text-white mb-6">卡牌已洗好</h2>
+              <p className="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
+                卡牌现在已经与你的能量共振，并准备好揭示其智慧。请专注于你的问题，然后点击下方按钮继续。
+              </p>
+              <button
+                onClick={proceedToDrawing}
+                className="px-8 py-4 bg-gradient-to-r from-purple-700 to-indigo-800 text-white rounded-full text-lg font-medium shadow-lg hover:from-purple-600 hover:to-indigo-700 transition-all flex items-center mx-auto"
+              >
+                <span>开始抽牌</span>
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </button>
+            </div>
+          )}
+          
+          {/* 抽牌阶段 */}
+          {readingState.phase === 'drawing' && (
+            <div className="relative z-10">
+              <h2 className="text-3xl font-bold text-center text-white mb-6">
+                选择你的卡牌
+              </h2>
+              <p className="text-lg text-center text-gray-300 mb-8 max-w-2xl mx-auto">
+                请选择{readingState.cardCount}张卡牌。用你的直觉去引导，选择那些吸引你注意力的卡牌。
+              </p>
+              
+              <div className="mb-4 text-center">
+                <span className="text-purple-300">
+                  已选择: {readingState.drawnCards.length}/{readingState.cardCount}
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-13 gap-3 max-h-[50vh] overflow-y-auto px-4 py-6 bg-black/20 rounded-xl">
+                {readingState.shuffledDeck.map((_, idx) => {
+                  const isSelected = readingState.drawnCards.some(card => card.id === readingState.shuffledDeck[idx].id);
+                  return (
+                    <div 
+                      key={idx} 
+                      className={`aspect-[3/5] rounded-md cursor-pointer transition-all ${
+                        isSelected ? 'opacity-30 pointer-events-none' : 'hover:scale-110 hover:shadow-lg hover:shadow-purple-500/30'
+                      }`}
+                      onClick={() => handleCardClick(idx)}
+                    >
+                      <div className="w-full h-full bg-gradient-to-br from-purple-900 to-indigo-900 rounded-md border border-purple-700/50">
+                        <div className="w-full h-full flex items-center justify-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          
+          {/* 已抽牌，等待解读阶段 */}
+          {readingState.phase === 'drawn' && (
+            <div className="relative z-10 text-center space-y-8">
+              <h2 className="text-3xl font-bold text-white mb-6">你的卡牌已选择完毕</h2>
+              <div className="flex justify-center">
+                <TarotSpread 
+                  cards={readingState.drawnCards} 
+                  spreadType={readingState.spreadType} 
+                  isRevealed={false} 
+                />
+              </div>
+              <p className="text-lg text-gray-300 mt-8 max-w-2xl mx-auto">
+                你的卡牌已准备就绪，蕴含着对你问题的神秘答案。准备好揭示它们的智慧了吗？
+              </p>
+              <button
+                onClick={proceedToReveal}
+                className="px-8 py-4 bg-gradient-to-r from-purple-700 to-indigo-800 text-white rounded-full text-lg font-medium shadow-lg hover:from-purple-600 hover:to-indigo-700 transition-all flex items-center justify-center mx-auto"
+              >
+                <Eye className="mr-2 h-5 w-5" />
+                <span>揭示卡牌含义</span>
+              </button>
+            </div>
+          )}
+          
+          {/* 登录阶段 */}
+          {readingState.phase === 'login' && (
+            <div className="relative z-10">
+              <h2 className="text-3xl font-bold text-center text-white mb-8">
+                记录你的灵魂印记
+              </h2>
+              <div className="max-w-md mx-auto">
+                <SoulChronicleLogin 
+                  onLoginSuccess={handleLoginSuccess}
+                  onCancel={handleLoginCancel}
+                />
+              </div>
+            </div>
+          )}
+          
+          {/* 分析阶段 */}
+          {readingState.phase === 'analysis' && (
+            <div className="relative z-10 space-y-8">
+              {/* 个性化欢迎 */}
+              {readingState.userSacredName && (
+                <div className="text-center mb-6">
+                  <h2 className="text-3xl font-bold text-white">
+                    <span className="text-purple-400">{readingState.userSacredName}</span>，以下是你的塔罗牌解读
+                  </h2>
+                </div>
+              )}
+              
+              {/* 卡牌展示 */}
+              <div className="mx-auto max-w-full overflow-x-auto pb-6">
+                <TarotSpread 
+                  cards={readingState.drawnCards} 
+                  spreadType={readingState.spreadType} 
+                  isRevealed={true} 
+                />
+              </div>
+              
+              {/* 详细解读结果 */}
+              <TarotReadingResult 
+                cards={readingState.drawnCards} 
+                spreadType={readingState.spreadType} 
+                lifeArea={readingState.selectedArea} 
+              />
+              
+              {/* 重置按钮 */}
+              <div className="flex justify-center mt-12">
+                <button 
+                  onClick={resetReading}
+                  className="px-6 py-3 bg-indigo-800/70 hover:bg-indigo-700/80 text-white rounded-full flex items-center transition-colors"
+                >
+                  <RotateCcw className="h-5 w-5 mr-2" />
+                  开始新的解读
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* 页脚 */}
+        <div className="mt-16 text-center text-gray-400 text-sm">
+          <p>Zenith Destiny © {new Date().getFullYear()} - 命运之巅塔罗牌解读</p>
+          <p className="mt-1">使用正宗的韦特-史密斯塔罗牌图像</p>
+        </div>
+      </div>
+    </div>
+  );
+}

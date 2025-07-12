@@ -1,0 +1,25 @@
+{
+  "home": {
+    "title": "Discover Your Destiny",
+    "subtitle": "Unlock the secrets of your life path through personalized numerology readings, mystical tarot guidance, and ancient I Ching wisdom. Get insights into your personality, relationships, and future possibilities.",
+    "freeReading": "Free Reading",
+    "tryTarot": "Try Tarot"
+  },
+  "feedback": {
+    "title": "How was your reading?",
+    "ratingLabel": "Rate your experience",
+    "ratingRequired": "Please select a rating",
+    "commentLabel": "Comments (optional)",
+    "commentPlaceholder": "Tell us what you liked or how we could improve...",
+    "helpfulLabel": "Was this reading helpful?",
+    "accurateLabel": "Was this reading accurate?",
+    "yes": "Yes",
+    "no": "No",
+    "submit": "Submit Feedback",
+    "submitting": "Submitting...",
+    "thankYou": "Thank you for your feedback! Your input helps us improve our readings.",
+    "submitError": "Unable to submit feedback. Please try again.",
+    "networkError": "Network error. Please check your connection and try again.",
+    "loginRequired": "Please log in to leave feedback."
+  }
+}

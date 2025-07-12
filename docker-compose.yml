@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # 前端服务
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:5000/api
+    depends_on:
+      - backend
+
+  # 后端API服务
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - MONGO_URI=mongodb://mongo:27017/divination
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=dev_jwt_secret_key
+      - JWT_REFRESH_SECRET=dev_jwt_refresh_secret_key
+      - API_KEY=dev_api_key
+      - AI_API_BASE_URL=https://ai-service-mock.com/api
+      - AI_API_KEY=dev_ai_api_key
+      - CORS_ORIGIN=http://localhost:3000
+    depends_on:
+      - mongo
+      - redis
+
+  # MongoDB数据库
+  mongo:
+    image: mongo:5
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  # MongoDB Express管理界面（开发环境使用）
+  mongo-express:
+    image: mongo-express
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=pass
+    depends_on:
+      - mongo
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+  redis_data:

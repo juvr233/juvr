@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: zenith-destiny-api:${TAG:-latest}
+    container_name: zenith-destiny-api
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+      - redis
+    ports:
+      - "${PORT:-5000}:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGO_URI=mongodb://mongodb:27017/zenith-destiny
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_DIR=/app/logs
+      - BACKUP_DIR=/app/backups
+    volumes:
+      - api_logs:/app/logs
+      - api_backups:/app/backups
+      - api_data:/app/data
+    networks:
+      - zenith-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  mongodb:
+    image: mongo:5.0
+    container_name: zenith-mongodb
+    restart: unless-stopped
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - zenith-network
+    command: --wiredTigerCacheSizeGB 0.5
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo mongodb:27017/test --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  redis:
+    image: redis:6-alpine
+    container_name: zenith-redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - zenith-network
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+networks:
+  zenith-network:
+    driver: bridge
+
+volumes:
+  api_logs:
+  api_backups:
+  api_data:
+  mongodb_data:
+  mongodb_config:
+  redis_data: 
