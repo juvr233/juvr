@@ -1,19 +1,7 @@
 import AiModel, { AiModelType, AiModelDocument } from '../../models/aiModel.model';
 import { logger } from '../../config/logger';
 
-// Mock TensorFlow.js for demonstration purposes
-const tf = {
-  sequential: () => ({
-    add: jest.fn(),
-    compile: jest.fn(),
-    fit: jest.fn().mockResolvedValue({ history: { acc: [0.85] } }),
-    save: jest.fn().mockResolvedValue({})
-  }),
-  layers: {
-    dense: jest.fn()
-  },
-  tensor2d: jest.fn()
-};
+import * as tf from '@tensorflow/tfjs-node';
 
 /**
  * AI模型训练服务
@@ -181,7 +169,7 @@ class ModelTrainingService {
 
   private async trainNumerologyModel(model: AiModelDocument, parameters: Record<string, any>): Promise<void> {
     logger.info('开始训练数字学模型');
-    const { features, labels } = this.preprocessData(model.trainingData, 'numerology');
+    const { features, labels } = this.preprocessData(model.trainingData, AiModelType.NUMEROLOGY);
     
     const tfModel = tf.sequential();
     tfModel.add(tf.layers.dense({inputShape: [features[0].length], units: 64, activation: 'relu'}));
@@ -195,13 +183,13 @@ class ModelTrainingService {
       batchSize: parameters.batchSize || 32
     });
     
-    model.accuracy = history.history.acc[history.history.acc.length - 1];
+    model.accuracy = (history.history.acc as number[]).slice(-1)[0];
     logger.info(`数字学模型训练完成，准确率: ${model.accuracy}`);
   }
 
   private async trainTarotModel(model: AiModelDocument, parameters: Record<string, any>): Promise<void> {
     logger.info('开始训练塔罗牌模型');
-    const { features, labels } = this.preprocessData(model.trainingData, 'tarot');
+    const { features, labels } = this.preprocessData(model.trainingData, AiModelType.TAROT);
     
     const tfModel = tf.sequential();
     tfModel.add(tf.layers.dense({inputShape: [features[0].length], units: 128, activation: 'relu'}));
@@ -215,13 +203,13 @@ class ModelTrainingService {
       batchSize: parameters.batchSize || 16
     });
     
-    model.accuracy = history.history.acc[history.history.acc.length - 1];
+    model.accuracy = (history.history.acc as number[]).slice(-1)[0];
     logger.info(`塔罗牌模型训练完成，准确率: ${model.accuracy}`);
   }
 
   private async trainIChingModel(model: AiModelDocument, parameters: Record<string, any>): Promise<void> {
     logger.info('开始训练易经模型');
-    const { features, labels } = this.preprocessData(model.trainingData, 'iching');
+    const { features, labels } = this.preprocessData(model.trainingData, AiModelType.ICHING);
     
     const tfModel = tf.sequential();
     tfModel.add(tf.layers.dense({inputShape: [features[0].length], units: 64, activation: 'relu'}));
@@ -235,13 +223,13 @@ class ModelTrainingService {
       batchSize: parameters.batchSize || 8
     });
     
-    model.accuracy = history.history.acc[history.history.acc.length - 1];
+    model.accuracy = (history.history.acc as number[]).slice(-1)[0];
     logger.info(`易经模型训练完成，准确率: ${model.accuracy}`);
   }
 
   private async trainCompatibilityModel(model: AiModelDocument, parameters: Record<string, any>): Promise<void> {
     logger.info('开始训练兼容性分析模型');
-    const { features, labels } = this.preprocessData(model.trainingData, 'compatibility');
+    const { features, labels } = this.preprocessData(model.trainingData, AiModelType.COMPATIBILITY);
     
     const tfModel = tf.sequential();
     tfModel.add(tf.layers.dense({inputShape: [features[0].length], units: 32, activation: 'relu'}));
@@ -255,13 +243,13 @@ class ModelTrainingService {
       batchSize: parameters.batchSize || 16
     });
     
-    model.accuracy = history.history.acc[history.history.acc.length - 1];
+    model.accuracy = (history.history.acc as number[]).slice(-1)[0];
     logger.info(`兼容性分析模型训练完成，准确率: ${model.accuracy}`);
   }
 
   private async trainBaziModel(model: AiModelDocument, parameters: Record<string, any>): Promise<void> {
     logger.info('开始训练八字模型');
-    const { features, labels } = this.preprocessData(model.trainingData, 'bazi');
+    const { features, labels } = this.preprocessData(model.trainingData, AiModelType.BAZI);
     
     const tfModel = tf.sequential();
     tfModel.add(tf.layers.dense({inputShape: [features[0].length], units: 256, activation: 'relu'}));
@@ -276,13 +264,13 @@ class ModelTrainingService {
       batchSize: parameters.batchSize || 8
     });
     
-    model.accuracy = history.history.acc[history.history.acc.length - 1];
+    model.accuracy = (history.history.acc as number[]).slice(-1)[0];
     logger.info(`八字模型训练完成，准确率: ${model.accuracy}`);
   }
 
   private async trainStarAstrologyModel(model: AiModelDocument, parameters: Record<string, any>): Promise<void> {
     logger.info('开始训练星座占星模型');
-    const { features, labels } = this.preprocessData(model.trainingData, 'starAstrology');
+    const { features, labels } = this.preprocessData(model.trainingData, AiModelType.STAR_ASTROLOGY);
     
     const tfModel = tf.sequential();
     tfModel.add(tf.layers.dense({inputShape: [features[0].length], units: 128, activation: 'relu'}));
@@ -296,13 +284,13 @@ class ModelTrainingService {
       batchSize: parameters.batchSize || 16
     });
     
-    model.accuracy = history.history.acc[history.history.acc.length - 1];
+    model.accuracy = (history.history.acc as number[]).slice(-1)[0];
     logger.info(`星座占星模型训练完成，准确率: ${model.accuracy}`);
   }
 
   private async trainHolisticModel(model: AiModelDocument, parameters: Record<string, any>): Promise<void> {
     logger.info('开始训练综合命理模型');
-    const { features, labels } = this.preprocessData(model.trainingData, 'holistic');
+    const { features, labels } = this.preprocessData(model.trainingData, AiModelType.HOLISTIC);
     
     const tfModel = tf.sequential();
     tfModel.add(tf.layers.dense({inputShape: [features[0].length], units: 512, activation: 'relu'}));
@@ -317,7 +305,7 @@ class ModelTrainingService {
       batchSize: parameters.batchSize || 4
     });
     
-    model.accuracy = history.history.acc[history.history.acc.length - 1];
+    model.accuracy = (history.history.acc as number[]).slice(-1)[0];
     logger.info(`综合命理模型训练完成，准确率: ${model.accuracy}`);
   }
   
@@ -325,9 +313,58 @@ class ModelTrainingService {
     // This is a placeholder for actual data preprocessing logic.
     // In a real application, this would involve feature engineering,
     // tokenization, normalization, etc.
-    const features = data.map(() => Array.from({length: 10}, () => Math.random()));
-    const labels = data.map(() => Array.from({length: 5}, () => Math.random()));
-    return { features, labels };
+    
+    const features = data.map(item => {
+      const input = item.input;
+      // Simple feature extraction: string length and character codes
+      const featureVector = Object.values(input).map((val: any) => {
+        if (typeof val === 'string') {
+          return val.length;
+        } else if (typeof val === 'number') {
+          return val;
+        } else if (typeof val === 'object' && val !== null) {
+          return Object.values(val).length;
+        }
+        return 0;
+      });
+      return featureVector;
+    });
+
+    const labels = data.map(item => {
+        const output = item.output;
+        // Simple label extraction
+        const labelVector = Object.values(output).map((val: any) => {
+            if (typeof val === 'string') {
+                return val.length;
+            } else if (typeof val === 'number') {
+                return val;
+            } else if (typeof val === 'object' && val !== null) {
+                return Object.values(val).length;
+            }
+            return 0;
+        });
+        return labelVector;
+    });
+
+    // Normalize features and labels to be between 0 and 1
+    const normalize = (arr: number[][]) => {
+      const maxVals = arr[0].map((_, i) => Math.max(...arr.map(row => row[i])));
+      return arr.map(row => row.map((val, i) => maxVals[i] > 0 ? val / maxVals[i] : 0));
+    };
+
+    const normalizedFeatures = normalize(features);
+    const normalizedLabels = normalize(labels);
+
+    // Pad arrays to have the same length
+    const pad = (arr: number[][]) => {
+        const maxLen = Math.max(...arr.map(row => row.length));
+        return arr.map(row => [...row, ...Array(maxLen - row.length).fill(0)]);
+    };
+
+    return {
+        features: pad(normalizedFeatures),
+        labels: pad(normalizedLabels)
+    };
   }
 }
 

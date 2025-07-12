@@ -5,6 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
 import aiService from '../ai.service';
+import * as tf from '@tensorflow/tfjs-node';
 
 const readFile = promisify(fs.readFile);
 
@@ -105,35 +106,22 @@ class AiInferenceService {
       if (!inputData.birthDate) {
         throw new Error('数字学解读需要提供出生日期');
       }
-      
-      // TODO: 实现真实的AI模型推理
-      // 这里是简化的模拟推理过程，实际应用中应该使用训练好的模型
-      
-      // 从模型训练数据中查找相似案例
-      const similarCases = model.trainingData
-        .filter((data: any) => {
-          const input = data.input;
-          // 简单判断相似性，实际应用中可以使用更复杂的算法
-          return input && input.birthDate && 
-                 input.birthDate.substring(0, 7) === inputData.birthDate.substring(0, 7);
-        })
-        .sort(() => Math.random() - 0.5) // 随机排序
-        .slice(0, 3); // 取前3个
-      
-      if (similarCases.length === 0) {
-        return this.fallbackToRuleEngine(AiModelType.NUMEROLOGY, inputData);
-      }
-      
-      // 合成解读结果
-      const result = {
-        lifePathNumber: this.calculateLifePathNumber(inputData.birthDate),
-        destinyNumber: inputData.name ? this.calculateDestinyNumber(inputData.name) : undefined,
-        interpretations: {
-          lifePath: this.generateLifePathInterpretation(this.calculateLifePathNumber(inputData.birthDate), similarCases),
-          destiny: inputData.name ? this.generateDestinyInterpretation(this.calculateDestinyNumber(inputData.name), similarCases) : undefined
-        }
-      };
-      
+
+      // 加载模型
+      const modelPath = `file://${model.modelPath}/model.json`;
+      const tfModel = await tf.loadLayersModel(modelPath);
+
+      // 预处理输入数据
+      const preprocessedInput = this.preprocessInput(inputData, AiModelType.NUMEROLOGY);
+      const inputTensor = tf.tensor2d([preprocessedInput]);
+
+      // 执行推理
+      const prediction = tfModel.predict(inputTensor) as tf.Tensor;
+      const resultData = await prediction.data();
+
+      // 后处理结果
+      const result = this.postprocessOutput(resultData, AiModelType.NUMEROLOGY);
+
       return result;
     } catch (error) {
       logger.error(`数字学推理失败: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -156,29 +144,25 @@ class AiInferenceService {
         throw new Error('塔罗牌解读需要至少一张卡牌');
       }
 
-      // 加载塔罗牌数据
-      const tarotData = await this.loadTarotData();
-      if (!tarotData) {
-        return this.fallbackToRuleEngine(AiModelType.TAROT, inputData);
-      }
+      // 加载模型
+      const modelPath = `file://${model.modelPath}/model.json`;
+      const tfModel = await tf.loadLayersModel(modelPath);
 
-      // 准备AI推理所需的数据
-      const prompt = this.buildTarotPrompt(inputData, tarotData);
-      
-      // 调用AI服务进行推理
-      const aiResponse = await this.callAiService(prompt, model);
-      
-      if (!aiResponse) {
-        return this.fallbackToRuleEngine(AiModelType.TAROT, inputData);
-      }
-      
-      // 解析AI响应
-      const result = this.parseTarotAiResponse(aiResponse, inputData, tarotData);
-      
+      // 预处理输入数据
+      const preprocessedInput = this.preprocessInput(inputData, AiModelType.TAROT);
+      const inputTensor = tf.tensor2d([preprocessedInput]);
+
+      // 执行推理
+      const prediction = tfModel.predict(inputTensor) as tf.Tensor;
+      const resultData = await prediction.data();
+
+      // 后处理结果
+      const result = this.postprocessOutput(resultData, AiModelType.TAROT);
+
       return result;
     } catch (error) {
       logger.error(`塔罗牌推理失败: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    return this.fallbackToRuleEngine(AiModelType.TAROT, inputData);
+      return this.fallbackToRuleEngine(AiModelType.TAROT, inputData);
     }
   }
   
@@ -188,7 +172,7 @@ class AiInferenceService {
   private async loadTarotData(): Promise<any> {
     try {
       const tarotDataPath = path.join(process.cwd(), 'data/tarot/tarot_card_meanings.json');
-      const data = await readFile(tarotDataPath, 'utf8');
+      const data = await fs.promises.readFile(tarotDataPath, 'utf8');
       return JSON.parse(data);
     } catch (error) {
       logger.error(`加载塔罗牌数据失败: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -343,25 +327,22 @@ ${cardDescriptions}
       if (!inputData.hexagram) {
         throw new Error('易经解读需要提供卦象信息');
       }
-      
-      // 加载易经数据
-      const ichingData = await this.loadIChingData();
-      if (!ichingData) {
-        return this.fallbackToRuleEngine(AiModelType.ICHING, inputData);
-      }
-      
-      // 准备AI推理所需的数据
-      const prompt = this.buildIChingPrompt(inputData, ichingData);
-      
-      // 调用AI服务进行推理
-      const aiResponse = await this.callAiService(prompt, model);
-      
-      // 解析AI响应
-      const result = this.parseIChingAiResponse(aiResponse, inputData, ichingData);
-      
-      // 记录推理数据
-      await this.logInferenceData(AiModelType.ICHING, inputData, result);
-      
+
+      // 加载模型
+      const modelPath = `file://${model.modelPath}/model.json`;
+      const tfModel = await tf.loadLayersModel(modelPath);
+
+      // 预处理输入数据
+      const preprocessedInput = this.preprocessInput(inputData, AiModelType.ICHING);
+      const inputTensor = tf.tensor2d([preprocessedInput]);
+
+      // 执行推理
+      const prediction = tfModel.predict(inputTensor) as tf.Tensor;
+      const resultData = await prediction.data();
+
+      // 后处理结果
+      const result = this.postprocessOutput(resultData, AiModelType.ICHING);
+
       return result;
     } catch (error) {
       logger.error(`易经推理失败: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -375,11 +356,9 @@ ${cardDescriptions}
   private async loadIChingData(): Promise<any> {
     try {
       // 从文件加载易经数据
-      const fs = require('fs').promises;
-      const path = require('path');
       const dataPath = path.join(process.cwd(), 'data/iching/iching_meanings.json');
       
-      const data = await fs.readFile(dataPath, 'utf8');
+      const data = await fs.promises.readFile(dataPath, 'utf8');
       return JSON.parse(data);
     } catch (error) {
       logger.error(`加载易经数据失败: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -474,46 +453,22 @@ ${cardDescriptions}
       if (!inputData.person1 || !inputData.person2) {
         throw new Error('兼容性分析需要提供两个人的数据');
       }
-      
-      // 准备必要的数据
-      const person1 = inputData.person1;
-      const person2 = inputData.person2;
-      
-      if ((!person1.birthDate && !person1.numerologyProfile) || 
-          (!person2.birthDate && !person2.numerologyProfile)) {
-        throw new Error('兼容性分析需要提供出生日期或数字学档案');
-      }
-      
-      // 计算或使用已有的数字学档案
-      let profile1 = person1.numerologyProfile;
-      let profile2 = person2.numerologyProfile;
-      
-      if (!profile1 && person1.birthDate) {
-        profile1 = {
-          lifePathNumber: this.calculateLifePathNumber(person1.birthDate),
-          destinyNumber: person1.name ? this.calculateDestinyNumber(person1.name) : undefined
-        };
-      }
-      
-      if (!profile2 && person2.birthDate) {
-        profile2 = {
-          lifePathNumber: this.calculateLifePathNumber(person2.birthDate),
-          destinyNumber: person2.name ? this.calculateDestinyNumber(person2.name) : undefined
-        };
-      }
-      
-      // 构建兼容性分析提示
-      const prompt = this.buildCompatibilityPrompt(person1, person2, profile1, profile2);
-      
-      // 调用AI服务
-      const aiResponse = await this.callAiService(prompt, model);
-      
-      // 解析AI响应
-      const result = this.parseCompatibilityAiResponse(aiResponse, person1, person2, profile1, profile2);
-      
-      // 记录推理数据
-      await this.logInferenceData(AiModelType.COMPATIBILITY, inputData, result);
-      
+
+      // 加载模型
+      const modelPath = `file://${model.modelPath}/model.json`;
+      const tfModel = await tf.loadLayersModel(modelPath);
+
+      // 预处理输入数据
+      const preprocessedInput = this.preprocessInput(inputData, AiModelType.COMPATIBILITY);
+      const inputTensor = tf.tensor2d([preprocessedInput]);
+
+      // 执行推理
+      const prediction = tfModel.predict(inputTensor) as tf.Tensor;
+      const resultData = await prediction.data();
+
+      // 后处理结果
+      const result = this.postprocessOutput(resultData, AiModelType.COMPATIBILITY);
+
       return result;
     } catch (error) {
       logger.error(`兼容性分析推理失败: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -688,25 +643,22 @@ ${cardDescriptions}
       if (!inputData.birthDate || !inputData.birthTime) {
         throw new Error('八字解读需要提供出生日期和时间');
       }
-      
-      // 计算八字
-      const baziData = await this.calculateBazi(inputData);
-      if (!baziData) {
-        return this.fallbackToRuleEngine(AiModelType.BAZI, inputData);
-      }
-      
-      // 准备AI推理所需的数据
-      const prompt = this.buildBaziPrompt(inputData, baziData);
-      
-      // 调用AI服务进行推理
-      const aiResponse = await this.callAiService(prompt, model);
-      
-      // 解析AI响应
-      const result = this.parseBaziAiResponse(aiResponse, inputData, baziData);
-      
-      // 记录推理数据
-      await this.logInferenceData(AiModelType.BAZI, inputData, result);
-      
+
+      // 加载模型
+      const modelPath = `file://${model.modelPath}/model.json`;
+      const tfModel = await tf.loadLayersModel(modelPath);
+
+      // 预处理输入数据
+      const preprocessedInput = this.preprocessInput(inputData, AiModelType.BAZI);
+      const inputTensor = tf.tensor2d([preprocessedInput]);
+
+      // 执行推理
+      const prediction = tfModel.predict(inputTensor) as tf.Tensor;
+      const resultData = await prediction.data();
+
+      // 后处理结果
+      const result = this.postprocessOutput(resultData, AiModelType.BAZI);
+
       return result;
     } catch (error) {
       logger.error(`八字推理失败: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -938,25 +890,22 @@ ${cardDescriptions}
       if (!inputData.birthDate) {
         throw new Error('星座占星解读需要提供出生日期');
       }
-      
-      // 计算星座和占星数据
-      const astrologyData = this.calculateAstrologyData(inputData);
-      if (!astrologyData) {
-        return this.fallbackToRuleEngine(AiModelType.STAR_ASTROLOGY, inputData);
-      }
-      
-      // 准备AI推理所需的数据
-      const prompt = this.buildAstrologyPrompt(inputData, astrologyData);
-      
-      // 调用AI服务进行推理
-      const aiResponse = await this.callAiService(prompt, model);
-      
-      // 解析AI响应
-      const result = this.parseAstrologyAiResponse(aiResponse, inputData, astrologyData);
-      
-      // 记录推理数据
-      await this.logInferenceData(AiModelType.STAR_ASTROLOGY, inputData, result);
-      
+
+      // 加载模型
+      const modelPath = `file://${model.modelPath}/model.json`;
+      const tfModel = await tf.loadLayersModel(modelPath);
+
+      // 预处理输入数据
+      const preprocessedInput = this.preprocessInput(inputData, AiModelType.STAR_ASTROLOGY);
+      const inputTensor = tf.tensor2d([preprocessedInput]);
+
+      // 执行推理
+      const prediction = tfModel.predict(inputTensor) as tf.Tensor;
+      const resultData = await prediction.data();
+
+      // 后处理结果
+      const result = this.postprocessOutput(resultData, AiModelType.STAR_ASTROLOGY);
+
       return result;
     } catch (error) {
       logger.error(`星座占星推理失败: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -1216,42 +1165,22 @@ ${cardDescriptions}
       if (!inputData.birthDate) {
         throw new Error('综合命理解读需要提供出生日期');
       }
-      
-      // 收集各种命理数据
-      const holisticData: Record<string, any> = {};
-      
-      // 获取数字学数据
-      holisticData.numerology = {
-        lifePathNumber: this.calculateLifePathNumber(inputData.birthDate),
-        destinyNumber: inputData.name ? this.calculateDestinyNumber(inputData.name) : undefined
-      };
-      
-      // 获取星座数据
-      holisticData.astrology = {
-        zodiacSign: this.getZodiacSign(new Date(inputData.birthDate)),
-        moonSign: this.getMoonSign(new Date(inputData.birthDate))
-      };
-      
-      // 如果有时间，获取八字数据
-      if (inputData.birthTime) {
-        const baziData = await this.calculateBazi(inputData);
-        if (baziData) {
-          holisticData.bazi = baziData;
-        }
-      }
-      
-      // 准备AI推理所需的数据
-      const prompt = this.buildHolisticPrompt(inputData, holisticData);
-      
-      // 调用AI服务进行推理
-      const aiResponse = await this.callAiService(prompt, model);
-      
-      // 解析AI响应
-      const result = this.parseHolisticAiResponse(aiResponse, inputData, holisticData);
-      
-      // 记录推理数据
-      await this.logInferenceData(AiModelType.HOLISTIC, inputData, result);
-      
+
+      // 加载模型
+      const modelPath = `file://${model.modelPath}/model.json`;
+      const tfModel = await tf.loadLayersModel(modelPath);
+
+      // 预处理输入数据
+      const preprocessedInput = this.preprocessInput(inputData, AiModelType.HOLISTIC);
+      const inputTensor = tf.tensor2d([preprocessedInput]);
+
+      // 执行推理
+      const prediction = tfModel.predict(inputTensor) as tf.Tensor;
+      const resultData = await prediction.data();
+
+      // 后处理结果
+      const result = this.postprocessOutput(resultData, AiModelType.HOLISTIC);
+
       return result;
     } catch (error) {
       logger.error(`综合命理推理失败: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -1869,4 +1798,99 @@ ${cardDescriptions}
       });
       
       // 生成整体解读
-      let overallReading = `
+      let overallReading = `This is a rule-based tarot reading.`;
+      
+      // 生成建议
+      let advice = `Consider the card meanings in the context of your question.`;
+
+      return {
+        interpretations,
+        overallReading,
+        advice
+      };
+    } catch (error) {
+      logger.error(`塔罗牌规则引擎失败: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return {
+        interpretations: {},
+        overallReading: '无法生成塔罗牌解读',
+        advice: '请检查输入数据并重试'
+      };
+    }
+  }
+
+  private ichingRuleEngine(inputData: any): any {
+    // Simplified I-Ching rule engine
+    return {
+      reading: "This is a rule-based I-Ching reading.",
+      changing: "Consider the changing lines.",
+      advice: "Act according to the wisdom of the I-Ching."
+    };
+  }
+
+  private compatibilityRuleEngine(inputData: any): any {
+    // Simplified compatibility rule engine
+    return {
+      compatibility: 50,
+      strengths: "You have some strengths.",
+      challenges: "You have some challenges.",
+      advice: "Work on your communication."
+    };
+  }
+
+  private baziRuleEngine(inputData: any): any {
+    // Simplified Bazi rule engine
+    return {
+      chart: "This is a rule-based Bazi chart.",
+      elements: "Your elements are balanced.",
+      reading: "Your Bazi reading is positive.",
+      insights: "You have many insights."
+    };
+  }
+
+  private starAstrologyRuleEngine(inputData: any): any {
+    // Simplified star astrology rule engine
+    return {
+      chart: "This is a rule-based astrology chart.",
+      houses: "Your houses are well-aligned.",
+      aspects: "Your aspects are favorable.",
+      reading: "Your astrology reading is positive."
+    };
+  }
+
+  private logInferenceData(modelType: AiModelType, inputData: any, result: any) {
+    // In a real application, you would log this data to a database or a logging service
+    // for monitoring, analysis, and future model retraining.
+    logger.info(`Inference log for ${modelType}:`, { input: inputData, output: result });
+  }
+
+  private preprocessInput(inputData: any, modelType: AiModelType): number[] {
+    // This should mirror the preprocessing in the training service
+    const featureVector = Object.values(inputData).map((val: any) => {
+      if (typeof val === 'string') {
+        return val.length;
+      } else if (typeof val === 'number') {
+        return val;
+      } else if (typeof val === 'object' && val !== null) {
+        return Object.values(val).length;
+      }
+      return 0;
+    });
+
+    // Normalize and pad
+    const maxLen = 10; // This should be consistent with training
+    const padded = [...featureVector, ...Array(maxLen - featureVector.length).fill(0)];
+    const normalized = padded.map(v => v / 100); // Simple normalization
+
+    return normalized;
+  }
+
+  private postprocessOutput(outputData: any, modelType: AiModelType): any {
+    // This is highly dependent on the model's output structure
+    return {
+      prediction: outputData,
+      interpretation: "This is a sample interpretation based on the model output."
+    };
+  }
+}
+
+export default new AiInferenceService();

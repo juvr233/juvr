@@ -2,6 +2,8 @@
 import AiModel, { AiModelType, TrainingData } from '../../models/aiModel.model';
 import { logger } from '../../config/logger';
 import UserHistory from '../../models/userHistory.model';
+import * as fs from 'fs';
+import { parse } from 'csv-parse/sync';
 
 /**
  * AI训练数据采集服务
@@ -134,12 +136,56 @@ class TrainingDataService {
    */
   public async importFromExternalSource(modelType: AiModelType, source: string, format: 'json' | 'csv' = 'json'): Promise<number> {
     try {
-      logger.info(`开始从外部数据源导入${modelType}训练数据`);
+      logger.info(`开始从外部数据源 '${source}' 导入${modelType}训练数据`);
       
-      // TODO: 实现从外部数据源导入逻辑
-      // 这里需要根据不同的数据源和格式实现具体的导入逻辑
+      if (!fs.existsSync(source)) {
+        throw new Error(`数据源文件不存在: ${source}`);
+      }
       
-      return 0;
+      const fileContent = fs.readFileSync(source, 'utf-8');
+      let records: any[];
+      
+      if (format === 'json') {
+        records = JSON.parse(fileContent);
+      } else if (format === 'csv') {
+        records = parse(fileContent, {
+          columns: true,
+          skip_empty_lines: true
+        });
+      } else {
+        throw new Error(`不支持的数据格式: ${format}`);
+      }
+      
+      if (!records || records.length === 0) {
+        logger.warn('数据源为空或格式不正确');
+        return 0;
+      }
+      
+      const trainingData: TrainingData[] = records.map(record => ({
+        input: record.input,
+        output: record.output,
+        source: `external_${format}`,
+        quality: record.quality || 0.75,
+        createdAt: new Date()
+      }));
+      
+      let model = await AiModel.findOne({ type: modelType });
+      if (!model) {
+        model = new AiModel({
+          type: modelType,
+          version: '0.1.0',
+          status: 'inactive',
+          trainingData: []
+        });
+      }
+      
+      model.trainingData.push(...trainingData);
+      model.trainingDataSize = model.trainingData.length;
+      
+      await model.save();
+      logger.info(`成功从 '${source}' 导入 ${trainingData.length} 条${modelType}训练数据`);
+      
+      return trainingData.length;
     } catch (error) {
       logger.error(`导入${modelType}训练数据失败: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
