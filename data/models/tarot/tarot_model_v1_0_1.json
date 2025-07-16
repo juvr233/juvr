@@ -1,0 +1,30 @@
+{
+  "type": "tarot",
+  "version": "1.0.1",
+  "accuracy": 0.7,
+  "validationScore": 0.6364346534284696,
+  "trainedOn": "2025-07-16T21:35:05.992Z",
+  "parameters": {
+    "dataSize": 10,
+    "spreadTypesCount": 0,
+    "questionTypesCount": 0,
+    "uniqueCardCombinations": 0,
+    "trainingMethod": "pattern-matching",
+    "featureExtraction": "question-cards-spread",
+    "trainedAt": "2025-07-16T21:35:05.992Z"
+  },
+  "metadata": {
+    "trainingDataSize": 4
+  },
+  "features": {
+    "cardInterpretations": {},
+    "cardCombinations": {},
+    "questionPatterns": {
+      "love": [],
+      "career": [],
+      "health": [],
+      "finance": [],
+      "general": []
+    }
+  }
+}

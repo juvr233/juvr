@@ -1,8 +1,8 @@
 import AiModel, { AiModelType } from '../../models/aiModel.model';
 import { logger } from '../../config/logger';
 import axios from 'axios';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import { promisify } from 'util';
 import aiService from '../ai.service';
 import * as tf from '@tensorflow/tfjs-node';
@@ -122,7 +122,7 @@ class AiInferenceService {
       // 后处理结果
       const result = this.postprocessOutput(resultData, AiModelType.NUMEROLOGY);
 
-      return result;
+      return { ...result, prediction: resultData };
     } catch (error) {
       logger.error(`数字学推理失败: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return this.fallbackToRuleEngine(AiModelType.NUMEROLOGY, inputData);
@@ -1864,32 +1864,99 @@ ${cardDescriptions}
   }
 
   private preprocessInput(inputData: any, modelType: AiModelType): number[] {
-    // This should mirror the preprocessing in the training service
-    const featureVector = Object.values(inputData).map((val: any) => {
-      if (typeof val === 'string') {
-        return val.length;
-      } else if (typeof val === 'number') {
-        return val;
-      } else if (typeof val === 'object' && val !== null) {
-        return Object.values(val).length;
-      }
-      return 0;
-    });
+    const features: number[] = [];
+    // This logic should be consistent with extractFeatures in modelTraining.service.ts
+    switch (modelType) {
+      case AiModelType.NUMEROLOGY:
+        features.push(inputData.lifePathNumber || 0);
+        features.push(inputData.expressionNumber || 0);
+        features.push(inputData.soulUrgeNumber || 0);
+        break;
+      case AiModelType.TAROT:
+        if (Array.isArray(inputData.cards)) {
+          inputData.cards.forEach((card: any) => {
+            features.push(card.id || 0);
+            features.push(card.isReversed ? 1 : 0);
+          });
+        }
+        break;
+      default:
+        for (const key in inputData) {
+          if (typeof inputData[key] === 'number') {
+            features.push(inputData[key]);
+          } else if (typeof inputData[key] === 'string') {
+            features.push(...this.tokenizeString(inputData[key]));
+          }
+        }
+        break;
+    }
+    
+    // Padding and Normalization should be applied here as in the training service
+    // For simplicity, this example assumes a fixed length and simple normalization
+    const maxFeatureLength = 50; // This should be consistent with training
+    const paddedFeatures = this.padData([features], maxFeatureLength)[0];
+    const normalizedFeatures = this.normalizeData([paddedFeatures])[0];
 
-    // Normalize and pad
-    const maxLen = 10; // This should be consistent with training
-    const padded = [...featureVector, ...Array(maxLen - featureVector.length).fill(0)];
-    const normalized = padded.map(v => v / 100); // Simple normalization
-
-    return normalized;
+    return normalizedFeatures;
   }
 
   private postprocessOutput(outputData: any, modelType: AiModelType): any {
-    // This is highly dependent on the model's output structure
-    return {
-      prediction: outputData,
-      interpretation: "This is a sample interpretation based on the model output."
-    };
+    // This logic should be able to convert raw model output (likely probabilities)
+    // into a meaningful result.
+    switch (modelType) {
+      case AiModelType.NUMEROLOGY:
+        return {
+          interpretation: `Based on the model's prediction, your numerology reading is...`,
+          prediction: outputData
+        };
+      case AiModelType.TAROT:
+        return {
+          overallReading: `The cards suggest...`,
+          advice: `You should consider...`,
+          prediction: outputData
+        };
+      default:
+        return {
+          prediction: outputData,
+          interpretation: "This is a sample interpretation based on the model output."
+        };
+    }
+  }
+
+  // Helper methods for preprocessing, should be identical to those in modelTraining.service.ts
+  private tokenizeString(str: string, maxLength: number = 10): number[] {
+    const tokens = str.split(' ').map(word => {
+      let hash = 0;
+      for (let i = 0; i < word.length; i++) {
+        hash = (hash << 5) - hash + word.charCodeAt(i);
+        hash |= 0;
+      }
+      return hash;
+    });
+    return tokens.slice(0, maxLength).concat(Array(Math.max(0, maxLength - tokens.length)).fill(0));
+  }
+
+  private padData(data: number[][], maxLength: number): number[][] {
+    return data.map(row => {
+      const paddedRow = row.slice(0, maxLength);
+      while (paddedRow.length < maxLength) {
+        paddedRow.push(0);
+      }
+      return paddedRow;
+    });
+  }
+
+  private normalizeData(data: number[][]): number[][] {
+    if (data.length === 0) return [];
+
+    const transposed = data[0].map((_, colIndex) => data.map(row => row[colIndex]));
+    const maxValues = transposed.map(col => Math.max(...col.map(Math.abs)));
+
+    return data.map(row => 
+      row.map((value, colIndex) => 
+        maxValues[colIndex] === 0 ? 0 : value / maxValues[colIndex]
+      )
+    );
   }
 }
 

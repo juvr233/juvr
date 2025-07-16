@@ -310,61 +310,120 @@ class ModelTrainingService {
   }
   
   private preprocessData(data: any[], type: AiModelType): { features: number[][], labels: number[][] } {
-    // This is a placeholder for actual data preprocessing logic.
-    // In a real application, this would involve feature engineering,
-    // tokenization, normalization, etc.
-    
-    const features = data.map(item => {
-      const input = item.input;
-      // Simple feature extraction: string length and character codes
-      const featureVector = Object.values(input).map((val: any) => {
-        if (typeof val === 'string') {
-          return val.length;
-        } else if (typeof val === 'number') {
-          return val;
-        } else if (typeof val === 'object' && val !== null) {
-          return Object.values(val).length;
+    const allFeatures: number[][] = [];
+    const allLabels: number[][] = [];
+    let maxFeatureLength = 0;
+    let maxLabelLength = 0;
+
+    for (const item of data) {
+      const featureVector = this.extractFeatures(item.input, type);
+      const labelVector = this.extractLabels(item.output, type);
+
+      if (featureVector.length > maxFeatureLength) {
+        maxFeatureLength = featureVector.length;
+      }
+      if (labelVector.length > maxLabelLength) {
+        maxLabelLength = labelVector.length;
+      }
+
+      allFeatures.push(featureVector);
+      allLabels.push(labelVector);
+    }
+
+    const paddedFeatures = this.padData(allFeatures, maxFeatureLength);
+    const paddedLabels = this.padData(allLabels, maxLabelLength);
+
+    const normalizedFeatures = this.normalizeData(paddedFeatures);
+    const normalizedLabels = this.normalizeData(paddedLabels);
+
+    return { features: normalizedFeatures, labels: normalizedLabels };
+  }
+
+  private extractFeatures(input: any, type: AiModelType): number[] {
+    const features: number[] = [];
+    // Implement feature extraction logic based on model type
+    // This is a more detailed example
+    switch (type) {
+      case AiModelType.NUMEROLOGY:
+        features.push(input.lifePathNumber || 0);
+        features.push(input.expressionNumber || 0);
+        features.push(input.soulUrgeNumber || 0);
+        break;
+      case AiModelType.TAROT:
+        if (Array.isArray(input.cards)) {
+          input.cards.forEach((card: any) => {
+            features.push(card.id || 0);
+            features.push(card.isReversed ? 1 : 0);
+          });
         }
-        return 0;
-      });
-      return featureVector;
+        break;
+      // Add cases for other model types
+      default:
+        // Generic feature extraction for other types
+        for (const key in input) {
+          if (typeof input[key] === 'number') {
+            features.push(input[key]);
+          } else if (typeof input[key] === 'string') {
+            features.push(...this.tokenizeString(input[key]));
+          }
+        }
+        break;
+    }
+    return features;
+  }
+
+  private extractLabels(output: any, type: AiModelType): number[] {
+    const labels: number[] = [];
+    // Implement label extraction logic based on model type
+    if (typeof output.interpretation === 'string') {
+      labels.push(...this.tokenizeString(output.interpretation, 20));
+    } else if (typeof output.score === 'number') {
+      labels.push(output.score);
+    } else {
+      // Default case
+      for (const key in output) {
+        if (typeof output[key] === 'number') {
+          labels.push(output[key]);
+        }
+      }
+    }
+    return labels;
+  }
+
+  private tokenizeString(str: string, maxLength: number = 10): number[] {
+    const tokens = str.split(' ').map(word => {
+      let hash = 0;
+      for (let i = 0; i < word.length; i++) {
+        hash = (hash << 5) - hash + word.charCodeAt(i);
+        hash |= 0; // Convert to 32bit integer
+      }
+      return hash;
     });
+    // Truncate or pad to maxLength
+    return tokens.slice(0, maxLength).concat(Array(Math.max(0, maxLength - tokens.length)).fill(0));
+  }
 
-    const labels = data.map(item => {
-        const output = item.output;
-        // Simple label extraction
-        const labelVector = Object.values(output).map((val: any) => {
-            if (typeof val === 'string') {
-                return val.length;
-            } else if (typeof val === 'number') {
-                return val;
-            } else if (typeof val === 'object' && val !== null) {
-                return Object.values(val).length;
-            }
-            return 0;
-        });
-        return labelVector;
+  private padData(data: number[][], maxLength: number): number[][] {
+    return data.map(row => {
+      const paddedRow = row.slice(0, maxLength);
+      while (paddedRow.length < maxLength) {
+        paddedRow.push(0);
+      }
+      return paddedRow;
     });
+  }
 
-    // Normalize features and labels to be between 0 and 1
-    const normalize = (arr: number[][]) => {
-      const maxVals = arr[0].map((_, i) => Math.max(...arr.map(row => row[i])));
-      return arr.map(row => row.map((val, i) => maxVals[i] > 0 ? val / maxVals[i] : 0));
-    };
+  private normalizeData(data: number[][]): number[][] {
+    if (data.length === 0) return [];
 
-    const normalizedFeatures = normalize(features);
-    const normalizedLabels = normalize(labels);
+    const transposed = data[0].map((_, colIndex) => data.map(row => row[colIndex]));
+    const maxValues = transposed.map(col => Math.max(...col.map(Math.abs)));
 
-    // Pad arrays to have the same length
-    const pad = (arr: number[][]) => {
-        const maxLen = Math.max(...arr.map(row => row.length));
-        return arr.map(row => [...row, ...Array(maxLen - row.length).fill(0)]);
-    };
-
-    return {
-        features: pad(normalizedFeatures),
-        labels: pad(normalizedLabels)
-    };
+    return data.map(row => 
+      row.map((value, colIndex) => 
+        maxValues[colIndex] === 0 ? 0 : value / maxValues[colIndex]
+      )
+    );
   }
 }
 

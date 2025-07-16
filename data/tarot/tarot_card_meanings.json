@@ -1,0 +1,218 @@
+{
+  "major": {
+    "The Fool": {
+      "upright": "新的开始，冒险，可能性，天真，自发性",
+      "reversed": "愚蠢的冒险，鲁莽，冲动，漫无目的"
+    },
+    "The Magician": {
+      "upright": "创造力，意志力，技能，行动力，掌控能力",
+      "reversed": "操纵，欺骗，未实现潜力，虚假表象"
+    },
+    "The High Priestess": {
+      "upright": "直觉，潜意识，神秘，内在声音，智慧",
+      "reversed": "秘密，失去直觉，表面解释，压抑直觉"
+    },
+    "The Empress": {
+      "upright": "丰饶，母性，创造力，自然，舒适",
+      "reversed": "依赖，过度保护，创造力受阻，不安全感"
+    },
+    "The Emperor": {
+      "upright": "权威，结构，领导力，稳定，父性",
+      "reversed": "独裁，僵化，过度控制，无能领导"
+    },
+    "The Hierophant": {
+      "upright": "传统，精神指导，遵循规则，教育",
+      "reversed": "个人信仰，打破常规，不服从"
+    },
+    "The Lovers": {
+      "upright": "爱，和谐，关系，价值观，选择",
+      "reversed": "不和谐，失衡，价值观冲突，不良选择"
+    },
+    "The Chariot": {
+      "upright": "决心，控制力，胜利，野心，坚持",
+      "reversed": "缺乏方向，缺乏控制，攻击性，失败"
+    },
+    "Strength": {
+      "upright": "内在力量，勇气，耐心，同情，自信",
+      "reversed": "自我怀疑，弱点，缺乏自信，不耐烦"
+    },
+    "The Hermit": {
+      "upright": "内省，寻求真相，独处，内在指引",
+      "reversed": "孤独，隔绝，回避，退缩，过度分析"
+    },
+    "Wheel of Fortune": {
+      "upright": "命运，转折点，机会，变化，循环",
+      "reversed": "坏运气，抵抗变化，打破循环"
+    },
+    "Justice": {
+      "upright": "公正，真相，法律，清晰，因果",
+      "reversed": "不公正，不诚实，不负责任，不平衡"
+    },
+    "The Hanged Man": {
+      "upright": "暂停，放弃，新视角，牺牲",
+      "reversed": "拖延，抵抗，徒劳，不必要的牺牲"
+    },
+    "Death": {
+      "upright": "结束，变革，转变，过渡，放下",
+      "reversed": "抵抗变化，无法前进，停滞不前"
+    },
+    "Temperance": {
+      "upright": "平衡，适度，耐心，调和，目标",
+      "reversed": "不平衡，过度，冲动，不耐烦"
+    },
+    "The Devil": {
+      "upright": "物质主义，成瘾，限制，阴影面，依附",
+      "reversed": "挣脱束缚，觉醒，重获控制力，解放"
+    },
+    "The Tower": {
+      "upright": "突变，混乱，启示，觉醒，真相",
+      "reversed": "避免灾难，恐惧改变，延迟必要的改变"
+    },
+    "The Star": {
+      "upright": "希望，信念，灵感，平静，宁静",
+      "reversed": "绝望，失去信心，消沉，丧失动力"
+    },
+    "The Moon": {
+      "upright": "直觉，潜意识，幻觉，恐惧，焦虑",
+      "reversed": "解除恐惧，混乱减轻，澄清"
+    },
+    "The Sun": {
+      "upright": "幸福，成功，喜悦，活力，启蒙",
+      "reversed": "暂时的失落，过度乐观，幼稚"
+    },
+    "Judgement": {
+      "upright": "重生，内在呼唤，觉醒，赎罪，反思",
+      "reversed": "自我怀疑，拒绝转变，后悔，停滞"
+    },
+    "The World": {
+      "upright": "完成，成就，旅程，整合，满足",
+      "reversed": "不完整，失败，拖延，失望"
+    }
+  },
+  "spreads": {
+    "three-card": {
+      "positions": [
+        "past",
+        "present",
+        "future"
+      ],
+      "descriptions": {
+        "past": "这张牌代表过去的影响和经历",
+        "present": "这张牌代表当前的情况和能量",
+        "future": "这张牌代表潜在的结果和未来发展"
+      }
+    },
+    "five-card": {
+      "positions": [
+        "current",
+        "challenge",
+        "advice",
+        "influence",
+        "outcome"
+      ],
+      "descriptions": {
+        "current": "这张牌代表当前的情况",
+        "challenge": "这张牌代表你面临的挑战或障碍",
+        "advice": "这张牌提供如何处理情况的建议",
+        "influence": "这张牌显示外部影响因素",
+        "outcome": "这张牌代表可能的结果"
+      }
+    },
+    "ten-card": {
+      "positions": [
+        "present",
+        "challenge",
+        "basis",
+        "past",
+        "crown",
+        "future",
+        "approach",
+        "environment",
+        "hopes",
+        "outcome"
+      ],
+      "descriptions": {
+        "present": "当前情况的核心",
+        "challenge": "面临的挑战或障碍",
+        "basis": "情况的基础",
+        "past": "最近的过去经历",
+        "crown": "可能发生的最佳结果",
+        "future": "未来发展",
+        "approach": "咨询者的态度或方法",
+        "environment": "环境影响",
+        "hopes": "恐惧和希望",
+        "outcome": "最终结果"
+      }
+    }
+  },
+  "question_types": {
+    "love": {
+      "themes": [
+        "关系",
+        "爱",
+        "情感连接",
+        "伴侣",
+        "吸引力",
+        "和谐"
+      ],
+      "key_cards": [
+        "The Lovers",
+        "The Empress",
+        "The Emperor",
+        "Two of Cups",
+        "Ten of Cups"
+      ]
+    },
+    "career": {
+      "themes": [
+        "工作",
+        "成就",
+        "成功",
+        "创造力",
+        "领导力",
+        "稳定性"
+      ],
+      "key_cards": [
+        "The Emperor",
+        "The Magician",
+        "Three of Pentacles",
+        "Eight of Pentacles",
+        "The World"
+      ]
+    },
+    "health": {
+      "themes": [
+        "健康",
+        "活力",
+        "平衡",
+        "休息",
+        "恢复",
+        "能量"
+      ],
+      "key_cards": [
+        "The Sun",
+        "Temperance",
+        "The Star",
+        "Four of Swords",
+        "Nine of Pentacles"
+      ]
+    },
+    "finance": {
+      "themes": [
+        "金钱",
+        "物质",
+        "丰富",
+        "投资",
+        "安全",
+        "成长"
+      ],
+      "key_cards": [
+        "The Emperor",
+        "King of Pentacles",
+        "Queen of Pentacles",
+        "Nine of Pentacles",
+        "Ace of Pentacles"
+      ]
+    }
+  }
+}
