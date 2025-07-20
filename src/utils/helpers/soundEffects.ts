@@ -2,6 +2,8 @@
  * Sound effect management utilities
  */
 
+import { AUDIO_CONFIG } from '../config/audio';
+
 // Keep track of all audio instances for global volume control
 const audioInstances: Record<string, HTMLAudioElement> = {};
 
@@ -63,7 +65,12 @@ export function playSoundEffect(
       let audio = audioInstances[soundId];
       
       if (!audio) {
-        audio = new Audio(`/sounds/${soundName}.mp3`);
+        // Map sound names to configured paths
+        const soundPath = soundName === 'card-flip' ? AUDIO_CONFIG.effects.cardFlip :
+                         soundName === 'card-select' ? AUDIO_CONFIG.effects.cardSelect :
+                         `/audio/effects/${soundName}.mp3`; // fallback
+        
+        audio = new Audio(soundPath);
         audioInstances[soundId] = audio;
       }
       
@@ -88,11 +95,15 @@ export function playSoundEffect(
       audio.play()
         .then(() => resolve())
         .catch(error => {
-          console.log(`Sound playback failed for ${soundName}:`, error);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`Sound playback failed for ${soundName}:`, error);
+          }
           reject(error);
         });
     } catch (error) {
-      console.log(`Error setting up sound ${soundName}:`, error);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Error setting up sound ${soundName}:`, error);
+      }
       reject(error);
     }
   });

@@ -29,14 +29,22 @@ const TarotCard: React.FC<TarotCardProps> = ({
     if (isRevealed && !isFlipped) {
       // Preload card image if we have a card
       if (card && card.image) {
-        loadImage(card.image).catch(e => console.log('Image loading failed:', e));
+        loadImage(card.image).catch(e => {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Image loading failed:', e);
+          }
+        });
       }
       
       const timer = setTimeout(() => {
         setIsFlipped(true);
         // Play flip sound
         if (enableSoundEffects) {
-          playSoundEffect('card-flip', { volume: 0.5 }).catch(error => console.log('Sound playback failed:', error));
+          playSoundEffect('card-flip', { volume: 0.5 }).catch(error => {
+            if (process.env.NODE_ENV === 'development') {
+              console.log('Sound playback failed:', error);
+            }
+          });
         }
       }, 300 * index); // Cascade animation effect
       return () => clearTimeout(timer);

@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useUser } from '../context/UserContext';
+import { useErrorHandler } from '../hooks/useErrorHandler';
+import { parseApiError } from '../utils/errorHandling';
+import ErrorToast from '../components/ErrorToast';
 
 const ShopifyAuthPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -9,15 +12,15 @@ const ShopifyAuthPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { setUser } = useUser();
   const navigate = useNavigate();
+  const { error, showError, clearError } = useErrorHandler();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    clearError();
 
     const endpoint = isLogin ? '/shopify-auth/login' : '/shopify-auth/register';
     const payload = isLogin ? { email, password } : { email, password, firstName, lastName };
@@ -36,8 +39,8 @@ const ShopifyAuthPage: React.FC = () => {
       navigate('/my-orders');
 
     } catch (err: any) {
-      const errorMsg = err.response?.data?.errors?.[0]?.message || err.response?.data?.message || 'An unknown error occurred.';
-      setError(errorMsg);
+      const apiError = parseApiError(err);
+      showError(apiError);
     } finally {
       setLoading(false);
     }
@@ -91,7 +94,6 @@ const ShopifyAuthPage: React.FC = () => {
             required
           />
         </div>
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
         <button type="submit" disabled={loading} className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-blue-300">
           {loading ? 'Processing...' : (isLogin ? 'Login' : 'Register')}
         </button>
@@ -99,6 +101,8 @@ const ShopifyAuthPage: React.FC = () => {
       <button onClick={() => setIsLogin(!isLogin)} className="text-center w-full mt-4 text-sm text-blue-500 hover:underline">
         {isLogin ? 'Need an account? Register' : 'Already have an account? Login'}
       </button>
+      
+      {error && <ErrorToast error={error} onClose={clearError} />}
     </div>
   );
 };

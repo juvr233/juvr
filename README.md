@@ -12,4 +12,10 @@ This is a numerology testing platform built with React, TypeScript, and Tailwind
 - **Compatibility Analysis**: Analyze compatibility between different numerology numbers
 - **User Profile**: Manage user information and testing history
 
+### Prerequisites
+
+- Node.js 18+ and npm
+- MongoDB database
+- Google Cloud SDK (see [setup guide](./docs/google-cloud-sdk-setup.md))
+
 ### Quick Start

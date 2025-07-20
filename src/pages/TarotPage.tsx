@@ -1,8 +1,12 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Sparkles, ArrowRight, Music, VolumeX } from 'lucide-react';
-import { shuffleDeck, type TarotCard } from '../utils/tarotCards';
+import { shuffleDeck, type TarotCard, AUTHENTIC_RWS_DECK } from '../utils/tarotCards';
 import { playSoundEffect, configureSoundEffects } from '../utils/helpers/soundEffects';
+import { AUDIO_CONFIG } from '../config/audio';
+import CardBack from '../components/CardBack';
+import { useImagePreloader } from '../hooks/useImagePreloader';
+import { PerformanceDetector } from '../config/performance';
 
 interface ReadingState {
   phase: 'welcome' | 'question' | 'shuffling' | 'shuffled' | 'drawing' | 'drawn' | 'login' | 'analysis';
@@ -86,11 +90,30 @@ export default function TarotPage() {
     hasBackgroundMusic: false
   });
 
+  // Get performance detector instance
+  const performanceDetector = useMemo(() => PerformanceDetector.getInstance(), []);
+  
+  // Preload tarot card images with performance optimization
+  const imageUrls = useMemo(() => AUTHENTIC_RWS_DECK.map(card => card.image), []);
+  const imagePreloadState = useImagePreloader(imageUrls, {
+    batchSize: performanceDetector.getOptimalBatchSize(),
+    delay: performanceDetector.getOptimalDelay(),
+    onProgress: (state) => {
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Image preloading progress: ${state.progress}%`);
+      }
+    }
+  });
+
   // Handle background music
   useEffect(() => {
     if (audioRef.current) {
       if (readingState.hasBackgroundMusic) {
-        audioRef.current.play().catch(e => console.log('Music playback failed:', e));
+        audioRef.current.play().catch(e => {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Music playback failed:', e);
+          }
+        });
       } else {
         audioRef.current.pause();
       }
@@ -160,35 +183,36 @@ export default function TarotPage() {
   };
 
   // Handle card selection via click or drag
-  const handleCardSelection = (cardIndex: number) => {
-    if (readingState.drawnCards.length >= readingState.cardCount) return;
-    
-    const selectedCard = {
-      ...readingState.shuffledDeck[cardIndex],
-      isReversed: Math.random() > 0.7 // 30% chance of reversed
-    };
-    const newDrawnCards = [...readingState.drawnCards, selectedCard];
-    
-    // Play a selection sound using our sound utility
-    if (readingState.hasBackgroundMusic) {
-      playSoundEffect('card-select', { volume: 0.3 })
-        .catch(error => console.log('Sound playback failed:', error));
-    }
-    
-    setReadingState(prev => ({ 
-      ...prev, 
-      drawnCards: newDrawnCards
-    }));
+  const drawnCardIds = useMemo(() => new Set(readingState.drawnCards.map(c => c.id)), [readingState.drawnCards]);
 
-    // If all cards have been drawn, proceed to "drawn" phase
-    if (newDrawnCards.length === readingState.cardCount) {
-      setTimeout(() => {
-        setReadingState(prev => ({ 
-          ...prev, 
-          phase: 'drawn'
-        }));
-      }, 800); // Longer delay for smooth transition
-    }
+  const handleCardSelection = (cardIndex: number) => {
+    setReadingState(prev => {
+      const selectedCard = prev.shuffledDeck[cardIndex];
+      
+      // Conditions to bail out: reading complete or card already selected
+      if (prev.drawnCards.length >= prev.cardCount || prev.drawnCards.some(c => c.id === selectedCard.id)) {
+        return prev;
+      }
+
+      const newDrawnCards = [...prev.drawnCards, selectedCard];
+
+      if (prev.hasBackgroundMusic) {
+        playSoundEffect('card-select', { volume: 0.3 }).catch(e => {
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Sound effect failed', e);
+          }
+        });
+      }
+
+      // Check for completion and schedule transition to the 'drawn' phase
+      if (newDrawnCards.length === prev.cardCount) {
+        setTimeout(() => {
+          setReadingState(current => ({ ...current, phase: 'drawn' }));
+        }, 800);
+      }
+
+      return { ...prev, drawnCards: newDrawnCards };
+    });
   };
   
   // Handle card click
@@ -221,11 +245,21 @@ export default function TarotPage() {
       {/* Hidden audio player */}
       <audio 
         ref={audioRef} 
-        src="https://s3.amazonaws.com/exp-us-standard/audio/playlist-example/Comfort_Fit_-_03_-_Sorry.mp3" 
+        src={AUDIO_CONFIG.background.tarot} 
         loop 
       />
 
       <div className="max-w-7xl mx-auto px-6">
+        {/* Image preloading indicator */}
+        {imagePreloadState.isLoading && (
+          <div className="fixed top-4 left-4 z-40 bg-purple-900/80 text-white px-3 py-2 rounded-lg text-sm">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse"></div>
+              <span>Loading images... {imagePreloadState.progress}%</span>
+            </div>
+          </div>
+        )}
+        
         {/* Mystical header */}
         <div className="text-center mb-12 relative">
           <div className="relative">
@@ -337,12 +371,12 @@ export default function TarotPage() {
                 <div className="absolute inset-2 border-4 border-l-transparent border-r-transparent border-indigo-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '2s' }}></div>
                 <div className="absolute inset-4 border-4 border-b-transparent border-purple-300 rounded-full animate-spin" style={{ animationDuration: '3s' }}></div>
                 
-                {/* Enhanced flying cards animation - More cards, better distribution */}
+                {/* Optimized flying cards animation */}
                 <div className="absolute inset-0">
-                  {[...Array(15)].map((_, i) => (
+                  {[...Array(8)].map((_, i) => (
                     <div 
                       key={i}
-                      className="absolute w-16 h-24 bg-gradient-to-br from-purple-900 to-indigo-900 rounded-md border border-purple-500 shadow-lg transform-style-preserve-3d" 
+                      className="absolute w-16 h-24 bg-purple-800 rounded-md border border-purple-600 transform-style-preserve-3d" 
                       style={{
                         top: '50%',
                         left: '50%',
@@ -535,11 +569,11 @@ export default function TarotPage() {
                   Tarot Deck
                 </div>
                 <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-4 max-h-[45vh] p-8 bg-gradient-to-b from-black/40 to-purple-900/20 backdrop-blur-sm rounded-xl shadow-inner overflow-y-auto">
-                  {readingState.shuffledDeck.map((_, idx) => {
-                    const isSelected = readingState.drawnCards.some(card => card.id === readingState.shuffledDeck[idx].id);
+                  {readingState.shuffledDeck.map((card, idx) => {
+                    const isSelected = drawnCardIds.has(card.id);
                     return (
                       <div
-                        key={idx}
+                        key={card.id}
                         className={`relative aspect-[3/5] rounded-lg cursor-pointer transition-all transform ${
                           isSelected
                             ? 'opacity-30 grayscale pointer-events-none'
@@ -556,14 +590,42 @@ export default function TarotPage() {
                         }}
                       >
                         <div className="w-full h-full perspective-1000">
-                          <div className="w-full h-full">
-                          </div>
+                          <CardBack className="w-full h-full" animated={true} />
                         </div>
                       </div>
                     );
                   })}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Drawn phase - show selected cards and proceed to analysis */}
+          {readingState.phase === 'drawn' && (
+            <div className="relative z-10 text-center">
+              <h2 className="text-3xl font-bold text-white mb-6">Your Chosen Cards</h2>
+              <p className="text-lg text-gray-300 mb-8 max-w-2xl mx-auto">
+                The cards have been drawn. Now, let's unveil their secrets.
+              </p>
+              <div className="flex flex-wrap justify-center gap-6 mb-8">
+                {readingState.drawnCards.map((card, idx) => (
+                  <div key={card.id} className="relative w-24 h-40 md:w-28 md:h-48 animate-fade-in">
+                    <div className="w-full h-full bg-gradient-to-br from-purple-700 to-indigo-800 rounded-lg border border-purple-400 shadow-lg flex items-center justify-center">
+                      <img src={card.image} alt={card.name} className="w-full h-full object-cover rounded-lg" />
+                    </div>
+                    <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-purple-600 border border-purple-400 shadow flex items-center justify-center text-xs text-white font-medium">
+                      {idx + 1}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => setReadingState(prev => ({ ...prev, phase: 'login' }))}
+                className="px-8 py-4 bg-gradient-to-r from-purple-700 to-indigo-800 text-white rounded-full text-lg font-medium shadow-lg hover:from-purple-600 hover:to-indigo-700 transition-all flex items-center mx-auto animate-float"
+              >
+                <span>Reveal My Reading</span>
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </button>
             </div>
           )}
         </div>
