@@ -41,7 +41,9 @@ const MyOrdersPage: React.FC = () => {
         });
         setOrders(response.data);
       } catch (error) {
-        console.error('Failed to fetch orders:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to fetch orders:', error);
+        }
       } finally {
         setLoading(false);
       }

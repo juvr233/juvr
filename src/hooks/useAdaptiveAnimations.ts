@@ -64,7 +64,18 @@ export const useAdaptiveAnimations = (): AdaptiveAnimationReturn => {
         return '';
       }
 
-      const baseClasses = `transition-all duration-${animationConfig.duration}`;
+      // Convert duration to valid Tailwind CSS class
+      const getDurationClass = (duration: number): string => {
+        if (duration <= 150) return 'duration-150';
+        if (duration <= 200) return 'duration-200';
+        if (duration <= 300) return 'duration-300';
+        if (duration <= 500) return 'duration-500';
+        if (duration <= 700) return 'duration-700';
+        if (duration <= 1000) return 'duration-1000';
+        return 'duration-1000';
+      };
+      
+      const baseClasses = `transition-all ${getDurationClass(animationConfig.duration)}`;
       
       switch (animationType) {
         case 'fade':

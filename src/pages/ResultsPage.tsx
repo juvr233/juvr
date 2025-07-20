@@ -81,7 +81,9 @@ export default function ResultsPage() {
         });
         setRecommendedProducts(response.data);
       } catch (error) {
-        console.error('Failed to fetch recommendations', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to fetch recommendations', error);
+        }
       }
     };
 

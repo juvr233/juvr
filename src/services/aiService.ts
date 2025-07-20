@@ -45,7 +45,9 @@ export const aiService = {
         throw new Error('获取AI命理解读失败');
       }
     } catch (error) {
-      console.error('AI命理解读API错误:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('AI命理解读API错误:', error);
+      }
       throw error;
     }
   },

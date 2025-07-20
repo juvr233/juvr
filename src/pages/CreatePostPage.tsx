@@ -30,7 +30,9 @@ const CreatePostPage: React.FC = () => {
           const response: any = await api.get('/divination');
           setHistory(response);
         } catch (err) {
-          console.error('Failed to fetch divination history:', err);
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Failed to fetch divination history:', err);
+          }
           setError('Failed to load divination history.');
         }
       }
